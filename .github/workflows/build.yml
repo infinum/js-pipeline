@@ -81,8 +81,8 @@ on:
         required: false
 
 jobs:
-  setup:
-    name: 'Setup'
+  build:
+    name: 'Build'
     runs-on: ${{ inputs.runner }}
     steps:
       - name: Set up additional environment variables
@@ -117,48 +117,23 @@ jobs:
             ${{ runner.os }}-build-
             ${{ runner.os }}-
       - name: Install JS packages (yarn)
-        if: ${{ inputs.package_manager }} == 'yarn' || (${{ inputs.package_manager }} != 'npm' && ${{ hashFiles('yarn.lock') }} != '')
+        if: ${{ inputs.package_manager == 'yarn' || (inputs.package_manager != 'npm' && hashFiles('yarn.lock') != '') }}
         run: yarn install --frozen-lockfile
       - name: Install JS packages (npm)
         if: ${{ inputs.package_manager }} == 'npm' || (${{ inputs.package_manager }} != 'yarn' && ${{ hashFiles('yarn.lock') }} == '')
         run: npm ci
-  audit:
-    needs: setup
-    name: 'Audit'
-    runs-on: ${{ inputs.runner }}
-    if: ${{ contains(inputs.ci_steps, 'audit') }}
-    steps:
       - name: Run audit
+        if: ${{ contains(inputs.ci_steps, 'audit') }}
         run: 'npm run audit'
-  lint:
-    needs: setup
-    name: 'Lint'
-    runs-on: ${{ inputs.runner }}
-    if: ${{ contains(inputs.ci_steps, 'lint') }}
-    steps:
       - name: Run lint
+        if: ${{ contains(inputs.ci_steps, 'lint') }}
         run: 'npm run lint'
-  test:
-    needs: setup
-    name: 'Test'
-    runs-on: ${{ inputs.runner }}
-    if: ${{ contains(inputs.ci_steps, 'test') }}
-    steps:
       - name: Run test
+        if: ${{ contains(inputs.ci_steps, 'test') }}
         run: 'npm run test'
-  build:
-    needs: setup
-    name: 'Build'
-    runs-on: ${{ inputs.runner }}
-    if: ${{ contains(inputs.ci_steps, 'build') }}
-    steps:
       - name: Run build
+        if: ${{ contains(inputs.ci_steps, 'build') }}
         run: 'npm run build'
-  notify:
-    needs: build
-    name: 'Notify'
-    runs-on: ${{ inputs.runner }}
-    steps:
       - name: Notify on Slack
         env:
           SUCCESS: ${{ steps.ci_steps.outcome == 'success' }}
