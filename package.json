@@ -3,7 +3,7 @@
     "audit": "echo \"Audit is running\"",
     "lint": "echo \"Lint is running\"",
     "test": "echo \"Test is running\"",
-    "build": "echo \"Build is running\""
+    "build": "echo \"Build is running\"; mkdir dist; touch dist/index.html"
   },
   "dependencies": {
     "noop": "^1.0.1"

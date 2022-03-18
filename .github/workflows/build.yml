@@ -50,7 +50,7 @@ on:
       notify_on:
         required: false
         type: string
-        default: 'failure'
+        default: 'all'
 
       # Steps that should be executed during build
       # Valid values:
@@ -138,10 +138,15 @@ jobs:
         id: 'build'
         if: ${{ contains(inputs.ci_steps, 'build') }}
         run: 'npm run build'
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-${{ $GITHUB_SHA }}
+          path: dist/**
       - name: Notify on Slack
         env:
-          FAILURE: ${{ steps.audit.outcome == 'failure' && steps.lint.outcome == 'failure' && steps.test.outcome == 'failure' && steps.build.outcome == 'failure' }}
           SUCCESS: ${{ steps.audit.outcome != 'failure' || steps.lint.outcome != 'failure' || steps.test.outcome != 'failure' || steps.build.outcome != 'failure' }}
+          FAILURE: ${{ steps.audit.outcome == 'failure' && steps.lint.outcome == 'failure' && steps.test.outcome == 'failure' && steps.build.outcome == 'failure' }}
           CHANNEL: ${{ inputs.slack_notification_channel }}
           NOTIFY_ON: ${{ inputs.notify_on }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
