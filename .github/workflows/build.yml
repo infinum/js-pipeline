@@ -120,7 +120,7 @@ jobs:
         if: ${{ inputs.package_manager == 'yarn' || (inputs.package_manager != 'npm' && hashFiles('yarn.lock') != '') }}
         run: yarn install --frozen-lockfile
       - name: Install JS packages (npm)
-        if: ${{ inputs.package_manager }} == 'npm' || (${{ inputs.package_manager }} != 'yarn' && ${{ hashFiles('yarn.lock') }} == '')
+        if: ${{ inputs.package_manager == 'npm' || (inputs.package_manager != 'yarn' && hashFiles('yarn.lock') == '') }}
         run: npm ci
       - name: Run audit
         if: ${{ contains(inputs.ci_steps, 'audit') }}

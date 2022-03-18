@@ -12,3 +12,9 @@ jobs:
     with:
       node_version: '16'
       ci_steps: 'audit build'
+  test_2:
+    name: 'Build with package manager, audit, test & build'
+    uses: infinum/js-pipeline/.github/workflows/build.yml@master
+    with:
+      package_manager: 'yarn'
+      ci_steps: 'audit test build'
