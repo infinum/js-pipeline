@@ -1,15 +1,13 @@
 name: Test
 
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: [Build]
-    branches: [staging]
-    types: [completed]
+  push:
+    branches:
+      - **
 
 jobs:
-  build:
-    name: build
+  test_1:
+    name: 'Build with node, audit & build'
     uses: ./build.yml
     with:
       node_version: '16'
