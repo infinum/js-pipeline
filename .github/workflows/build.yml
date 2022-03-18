@@ -123,21 +123,25 @@ jobs:
         if: ${{ inputs.package_manager == 'npm' || (inputs.package_manager != 'yarn' && hashFiles('yarn.lock') == '') }}
         run: npm ci
       - name: Run audit
+        id: 'audit'
         if: ${{ contains(inputs.ci_steps, 'audit') }}
         run: 'npm run audit'
       - name: Run lint
+        id: 'lint'
         if: ${{ contains(inputs.ci_steps, 'lint') }}
         run: 'npm run lint'
       - name: Run test
+        id: 'test'
         if: ${{ contains(inputs.ci_steps, 'test') }}
         run: 'npm run test'
       - name: Run build
+        id: 'build'
         if: ${{ contains(inputs.ci_steps, 'build') }}
         run: 'npm run build'
       - name: Notify on Slack
         env:
-          SUCCESS: ${{ steps.ci_steps.outcome == 'success' }}
-          FAILURE: ${{ steps.ci_steps.outcome == 'failure' }}
+          SUCCESS: ${{ steps.audit.outcome == 'success' && steps.lint.outcome == 'success' && steps.test.outcome == 'success' && steps.build.outcome == 'success' }}
+          FAILURE: ${{ steps.audit.outcome != 'success' || steps.lint.outcome != 'success' || steps.test.outcome != 'success' || steps.build.outcome != 'success' }}
           CHANNEL: ${{ inputs.slack_notification_channel }}
           NOTIFY_ON: ${{ inputs.notify_on }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
