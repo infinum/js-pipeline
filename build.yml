@@ -1,0 +1,241 @@
+name: Build
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_call:
+    inputs:
+      # Selects the runner on which the workflow will run
+      # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+      runner:
+        required: false
+        type: string
+        default: ubuntu-20.04
+
+      # React or Angular
+      # if not defined, use angular if angular.json is present, otherwise use react
+      framework:
+        required: false
+        type: string
+
+      # Server-side rendering or client-side rendering
+      ssr:
+        required: false
+        type: boolean
+        default: false
+
+      # Should npm or yarn be used to install dependencies?
+      # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
+      package_manager:
+        required: false
+        type: string
+
+      # should generally be left undefined - it will default to the `.node-version` file in the root of the project
+      node_version:
+        required: false
+        type: string
+
+      # Slack channel name where the notifications will be sent
+      slack_notification_channel:
+        required: false
+        type: string
+
+      # What types of notifications should be sent?
+      # Valid values:
+      #   - 'success'
+      #   - 'failure'
+      #   - 'all'
+      notify_on:
+        required: false
+        type: string
+        default: 'failure'
+
+      # Steps that should be executed during build
+      # Valid values:
+      #   - 'audit'
+      #   - 'lint'
+      #   - 'test'
+      #   - 'build'
+      ci_steps:
+        required: true
+        type: string
+
+    secrets:
+      VAULT_ADDR:
+        required: true
+      VAULT_AUTH_METHOD:
+        required: true
+      VAULT_AUTH_ROLE_ID:
+        required: true
+      VAULT_AUTH_SECRET_ID:
+        required: true
+      SLACK_BOT_TOKEN:
+        required: false
+
+      # Additional environment variables set in the workflow
+      # Format: JSON object with string values (key becomes env variable name, value becomes env variable value)
+      # Example: '{ "FOO": "BAR", "BAZ": "${{ secrets.BAZ }}" }'
+      ADDITIONAL_VARIABLES:
+        required: false
+
+jobs:
+  setup:
+    name: 'Setup'
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Set up additional environment variables
+        env:
+          ADDITIONAL_VARIABLES: ${{ secrets.ADDITIONAL_VARIABLES }}
+        if: ${{ env.ADDITIONAL_VARIABLES }}
+        run: >
+          if echo '${{ env.ADDITIONAL_VARIABLES }}' | jq >/dev/null 2>&1; then
+            echo '${{ env.ADDITIONAL_VARIABLES }}' | jq -r 'to_entries[] | "\(.key) \(.value)"' | \
+              while read -r key value; do echo "$key=$value" >> $GITHUB_ENV && echo "Variable $key has been set"; done
+          else
+            echo "ADDITIONAL_VARIABLES secret you supplied is not a valid JSON object. Check the formatting of the secret."
+            exit 1
+          fi
+      - name: Git checkout
+        uses: actions/checkout@v2
+      - name: 'Set up Node.js'
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ inputs.node_version }}
+          node-version-file: '.node-version'
+      - name: Cache node modules
+        id: cache-nodemodules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Install JS packages (yarn)
+        if: ${{ inputs.package_manager }} == 'yarn' || (${{ inputs.package_manager }} != 'npm' && hashFiles('yarn.lock') != '')
+        run: yarn install --frozen-lockfile
+      - name: Install JS packages (npm)
+        if: ${{ inputs.package_manager }} == 'npm' || (${{ inputs.package_manager }} != 'yarn' && hashFiles('yarn.lock') == '')
+        run: npm ci
+  audit:
+    needs: setup
+    name: 'Audit'
+    runs-on: ${{ inputs.runner }}
+    if: ${{ contains(inputs.ci_steps, 'audit') }}
+    steps:
+      - name: Run audit
+        run: 'npm run audit'
+  lint:
+    needs: setup
+    name: 'Lint'
+    runs-on: ${{ inputs.runner }}
+    if: ${{ contains(inputs.ci_steps, 'lint') }}
+    steps:
+      - name: Run lint
+        run: 'npm run lint'
+  test:
+    needs: setup
+    name: 'Test'
+    runs-on: ${{ inputs.runner }}
+    if: ${{ contains(inputs.ci_steps, 'test') }}
+    steps:
+      - name: Run test
+        run: 'npm run test'
+  build:
+    needs: setup
+    name: 'Build'
+    runs-on: ${{ inputs.runner }}
+    if: ${{ contains(inputs.ci_steps, 'build') }}
+    steps:
+      - name: Run build
+        run: 'npm run build'
+  notify:
+    needs: build
+    name: 'Notify'
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Notify on Slack
+        env:
+          SUCCESS: ${{ steps.ci_steps.outcome == 'success' }}
+          FAILURE: ${{ steps.ci_steps.outcome == 'failure' }}
+          CHANNEL: ${{ inputs.slack_notification_channel }}
+          NOTIFY_ON: ${{ inputs.notify_on }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ always() && inputs.slack_notification_channel }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ] ; then
+            echo "SLACK_BOT_TOKEN secret is missing from the workflow!"
+            exit 1
+          fi
+          if [[ "$NOTIFY_ON" != "success" && "$NOTIFY_ON" != "failure" && "$NOTIFY_ON" != "all" ]] ; then
+            echo "notify_on input is not valid. Must be one of: 'success', 'failure', or 'all'"
+            exit 1
+          fi
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          COMMIT_MESSAGE=$(git show -s --format=%s)
+          GITHUB_PR_URL=$(gh pr view --json url --jq .url || true)
+          GITHUB_PR_NUMBER=$(gh pr view --json number --jq .number || true)
+          GITHUB_RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          GITHUB_COMMIT_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+          GITHUB_BRANCH_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/tree/$GITHUB_REF_NAME"
+          if [ -z "$GITHUB_PR_NUMBER" ] ; then
+            GITHUB_PR_MESSAGE=""
+          else
+            GITHUB_PR_MESSAGE="(PR <$GITHUB_PR_URL|#$GITHUB_PR_NUMBER>)"
+          fi
+          if [[ "$SUCCESS" = true && ("$NOTIFY_ON" = "success" || "$NOTIFY_ON" = "all") ]] ; then
+            curl -X POST https://slack.com/api/chat.postMessage \
+                 -H "Content-type: application/json; charset=utf-8" \
+                 -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                 -s -S \
+                 -d @- <<- EOF
+                  {
+                    "channel": "$CHANNEL",
+                    "attachments": [
+                      {
+                        "color": "#19a974",
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": "$GITHUB_ACTOR's <$GITHUB_RUN_URL|build> on <$GITHUB_BRANCH_URL|$GITHUB_REF_NAME> passed $GITHUB_PR_MESSAGE \n _ $COMMIT_MESSAGE _ (<$GITHUB_COMMIT_URL|$SHORT_SHA>)"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          EOF
+          fi
+          if [[ "$FAILURE" = true && ("$NOTIFY_ON" = "failure" || "$NOTIFY_ON" = "all") ]] ; then
+            curl -X POST https://slack.com/api/chat.postMessage \
+                 -H "Content-type: application/json; charset=utf-8" \
+                 -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                 -s -S \
+                 -d @- <<- EOF
+                  {
+                    "channel": "$CHANNEL",
+                    "attachments": [
+                      {
+                        "color": "#f75819",
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": "$GITHUB_ACTOR's <$GITHUB_RUN_URL|build> on <$GITHUB_BRANCH_URL|$GITHUB_REF_NAME> failed $GITHUB_PR_MESSAGE \n _ $COMMIT_MESSAGE _ (<$GITHUB_COMMIT_URL|$SHORT_SHA>)"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          EOF
+          fi

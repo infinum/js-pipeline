@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "audit": "echo \"Audit is running\"",
+    "lint": "echo \"Lint is running\"",
+    "test": "echo \"Test is running\"",
+    "build": "echo \"Build is running\""
+  }
+}

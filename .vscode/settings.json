@@ -1,0 +1,10 @@
+{
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-action.json": [],
+    "https://json.schemastore.org/github-workflow.json": [
+      "file:///Users/darko/Projects/js-pipeline/build.yml",
+      "file:///Users/darko/Projects/js-pipeline/deploy.yml",
+      "file:///Users/darko/Projects/js-pipeline/.github/workflows/test.yml"
+    ]
+  }
+}

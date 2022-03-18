@@ -1,0 +1,16 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [Build]
+    branches: [staging]
+    types: [completed]
+
+jobs:
+  build:
+    name: build
+    uses: ./build.yml
+    with:
+      node_version: '16'
+      ci_steps: 'audit build'
