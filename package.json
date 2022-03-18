@@ -4,5 +4,8 @@
     "lint": "echo \"Lint is running\"",
     "test": "echo \"Test is running\"",
     "build": "echo \"Build is running\""
+  },
+  "dependencies": {
+    "noop": "^1.0.1"
   }
 }
