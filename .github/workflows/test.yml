@@ -8,7 +8,7 @@ on:
 jobs:
   test_1:
     name: 'Build with node, audit & build'
-    uses: ./build.yml
+    uses: infinum/js-pipeline/build.yml@master
     with:
       node_version: '16'
       ci_steps: 'audit build'
