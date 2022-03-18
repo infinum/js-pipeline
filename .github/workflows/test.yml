@@ -13,8 +13,11 @@ jobs:
       node_version: '16'
       ci_steps: 'audit build'
   test_2:
-    name: 'Build with package manager, audit, test & build'
+    name: 'Build with package manager, audit, test & build, slack notification'
     uses: infinum/js-pipeline/.github/workflows/build.yml@master
     with:
       package_manager: 'yarn'
       ci_steps: 'audit test build'
+      slack_notification_channel: 'test-2'
+    secrets:
+      SLACK_BOT_TOKEN: ${{ secrets.RAILS_TEAM_SLACK_BOT_TOKEN }}
