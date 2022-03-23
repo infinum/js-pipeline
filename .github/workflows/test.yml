@@ -6,13 +6,13 @@ on:
       - master
 
 jobs:
-  test_1:
+  build_1:
     name: 'Build with node, audit & build'
     uses: infinum/js-pipeline/.github/workflows/build.yml@master
     with:
       node_version: '16'
       ci_steps: 'audit build'
-  test_2:
+  build_2:
     name: 'Build with package manager, audit, test & build, slack notification'
     uses: infinum/js-pipeline/.github/workflows/build.yml@master
     with:
