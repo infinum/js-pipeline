@@ -22,7 +22,7 @@
 | `package_manager` | Package manager to use for the action. | all | false | Yarn if `yarn.lock` is present, npm otherwise |
 | `node_version` | Node.js version to use. | all | false | The one defined in `.node-version` |
 | `ci_steps` | Steps to run in the workflow, as a space separated string. Possible values are in a separate section above | all | true | N/A |
-| `features` | Features to enable, possible values right now are `''` and `'secrets'` | `deploy-next-ssr` | required | `''` |
+| `features` | Features to enable, possible values right now are `''` and `'secrets'` | `deploy-next-ssr` | false | `''` |
 | `deploy_host` | Host to deploy to | `deploy-next-ssr` | false | N/A |
 | `deploy_token` | Path where the app is deployed on the server | `deploy-next-ssr` | false | N/A |
 | `deploy_user` | User to deploy as | `deploy-next-ssr` | false | N/A |
@@ -118,9 +118,9 @@ Other projects are not yet supported. Check the [Productive project](https://app
 
 ## Custom actions
 
-### Bootstrap Node.js
+### Bootstrap Next.js
 
-This action is used to install and cache Node.js dependencies specifically for Next.js projects.
+This action is used to install and cache Next.js dependencies specifically for Next.js projects.
 
 | property | description | required | default |
 | --- | --- | --- | --- |
