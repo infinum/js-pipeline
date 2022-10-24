@@ -10,7 +10,7 @@
 | `audit` | Runs `npm run audit` |
 | `build-next` | Builds Next.js app |
 | `deploy-next-ssr` | Deploys Next.js app with SSR |
-| `analyze` | Runs a bundle analysis and comparison with the target branch (Next.js) |
+| `analyze` | Runs a bundle analysis and comparison with the target branch (Next.js, WIP) |
 
 ## How to use it
 
@@ -57,7 +57,7 @@ In order to prepare for deployment, the following script should be present in `p
 ```json
 {
   "scripts": {
-    "build": "next build; cp -r ./public .next/standalone/public; mkdir ./.next/standalone/public/_next; cp -r ./.next/static ./.next/standalone/public/_next/static; mv ./.next/standalone/server.js ./.next/standalone/index.js; cp ./newrelic.js ./.next/standalone/newrelic.js; cp ./next.config.js ./.next/standalone/next.config.js"
+    "build": "next build; cp -r ./public .next/standalone/public; mkdir ./.next/standalone/public/_next; cp -r ./.next/static ./.next/standalone/public/_next/static; mv ./.next/standalone/server.js ./.next/standalone/index.js; cp ./next.config.js ./.next/standalone/next.config.js"
   }
 }
 ```
@@ -76,7 +76,7 @@ jobs:
     name: 'Run'
     uses: ./.github/workflows/build.yml
     with:
-      ci_steps: 'lint test build-next analyze'
+      ci_steps: 'lint test analyze'
       workflow: '.github/workflows/pr.yml'
 
 ```
@@ -120,7 +120,7 @@ Other projects are not yet supported. Check the [Productive project](https://app
 
 ### Bootstrap Next.js
 
-This action is used to install and cache Next.js dependencies specifically for Next.js projects.
+This action is used to install and cache node dependencies specifically for Next.js projects.
 
 | property | description | required | default |
 | --- | --- | --- | --- |
