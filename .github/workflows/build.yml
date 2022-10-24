@@ -1,4 +1,4 @@
-name: Build
+name: Build workflow
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,7 +12,7 @@ on:
       runner:
         required: false
         type: string
-        default: ubuntu-20.04
+        default: ubuntu-latest
 
       # React or Angular
       # if not defined, use angular if angular.json is present, otherwise use react
@@ -57,9 +57,35 @@ on:
       #   - 'audit'
       #   - 'lint'
       #   - 'test'
-      #   - 'build'
+      #   - 'jest'
+      #   - 'build-next'
+      #   - 'analyze'
       ci_steps:
         required: true
+        type: string
+
+      # Optional features used in the project
+      # Valid values:
+      #   - 'secrets'
+      features:
+        required: false
+        type: string
+
+      # The workflow that is used for bundle analysis
+      workflow:
+        required: false
+        type: string
+
+      deploy_host:
+        required: false
+        type: string
+
+      deploy_to:
+        required: false
+        type: string
+
+      deploy_user:
+        required: false
         type: string
 
     secrets:
@@ -73,6 +99,8 @@ on:
         required: false
       SLACK_BOT_TOKEN:
         required: false
+      SSH_PRIVATE_KEY:
+        required: false
 
       # Additional environment variables set in the workflow
       # Format: JSON object with string values (key becomes env variable name, value becomes env variable value)
@@ -81,8 +109,31 @@ on:
         required: false
 
 jobs:
-  build:
-    name: 'Build'
+  setup:
+    name: 'Environment setup'
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap-nextjs
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          env_vars: ${{ inputs.env_vars }}
+      - name: Install JS packages (yarn)
+        shell: bash
+        if: ${{ inputs.package_manager == 'yarn' || (inputs.package_manager != 'npm' && hashFiles('yarn.lock') != '') }}
+        run: yarn install --frozen-lockfile
+      - name: Install JS packages (npm)
+        shell: bash
+        if: ${{ inputs.package_manager == 'npm' || (inputs.package_manager != 'yarn' && hashFiles('yarn.lock') == '') }}
+        run: npm ci
+  build-next:
+    needs: [setup]
+    name: 'Build next.js'
+    if: ${{ contains(inputs.ci_steps, 'build-next') || contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
     steps:
       - name: Set up additional environment variables
@@ -98,128 +149,196 @@ jobs:
             exit 1
           fi
       - name: Git checkout
-        uses: actions/checkout@v2
-      - name: 'Set up Node.js'
-        uses: actions/setup-node@v2
+        uses: actions/checkout@v3
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap-nextjs
         with:
-          node-version: ${{ inputs.node_version }}
-          node-version-file: '.node-version'
-      - name: Cache node modules
-        id: cache-nodemodules
-        uses: actions/cache@v2
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: Install JS packages (yarn)
-        if: ${{ inputs.package_manager == 'yarn' || (inputs.package_manager != 'npm' && hashFiles('yarn.lock') != '') }}
-        run: yarn install --frozen-lockfile
-      - name: Install JS packages (npm)
-        if: ${{ inputs.package_manager == 'npm' || (inputs.package_manager != 'yarn' && hashFiles('yarn.lock') == '') }}
-        run: npm ci
-      - name: Run audit
-        id: 'audit'
-        if: ${{ contains(inputs.ci_steps, 'audit') }}
-        run: 'npm run audit'
-      - name: Run lint
-        id: 'lint'
-        if: ${{ contains(inputs.ci_steps, 'lint') }}
-        run: 'npm run lint'
-      - name: Run test
-        id: 'test'
-        if: ${{ contains(inputs.ci_steps, 'test') }}
-        run: 'npm run test'
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          env_vars: ${{ inputs.env_vars }}
       - name: Run build
+        shell: bash
         id: 'build'
-        if: ${{ contains(inputs.ci_steps, 'build') }}
         run: 'npm run build'
+      - name: Prepare artifact
+        shell: bash
+        id: 'prepare-artifact'
+        run: 'rm -rf .next/cache'
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: "build"
-          path: dist/**
-      - name: Notify on Slack
+          name: 'build'
+          path: .next/**
+  lint:
+    needs: [setup]
+    name: 'Lint the code'
+    if: ${{ contains(inputs.ci_steps, 'lint') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap-nextjs
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          env_vars: ${{ inputs.env_vars }}
+      - name: Run lint
+        shell: bash
+        id: 'lint'
+        run: 'npm run lint'
+  test:
+    needs: [setup]
+    name: 'Run tests'
+    if: ${{ contains(inputs.ci_steps, 'test') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap-nextjs
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          env_vars: ${{ inputs.env_vars }}
+      - name: Run test
+        shell: bash
+        id: 'test'
+        run: 'npm run test'
+  jest:
+    needs: [setup]
+    name: 'Run tests with coverage'
+    if: ${{ contains(inputs.ci_steps, 'jest') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap-nextjs
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          env_vars: ${{ inputs.env_vars }}
+      - name: Test Coverage
+        id: testCoverage
+        uses: anuraag016/Jest-Coverage-Diff@master
+        with:
+          fullCoverageDiff: false
+          runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
+          delta: 0.5
+  analyze:
+    needs: [build-next]
+    name: 'Analyze the Next.js bundle size'
+    if: ${{ contains(inputs.ci_steps, 'analyze') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Analyze the bundle'
+        uses: ./.github/actions/analyze
+        with:
+          workflow: ${{ inputs.workflow }}
+  deploy-next-ssr:
+    needs: [setup]
+    name: 'Deploy the application'
+    if: ${{ contains(inputs.ci_steps, 'deploy-next-ssr') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Set up additional environment variables
         env:
-          SUCCESS: ${{ steps.audit.outcome != 'failure' || steps.lint.outcome != 'failure' || steps.test.outcome != 'failure' || steps.build.outcome != 'failure' }}
-          FAILURE: ${{ steps.audit.outcome == 'failure' && steps.lint.outcome == 'failure' && steps.test.outcome == 'failure' && steps.build.outcome == 'failure' }}
-          CHANNEL: ${{ inputs.slack_notification_channel }}
-          NOTIFY_ON: ${{ inputs.notify_on }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: ${{ always() && inputs.slack_notification_channel }}
-        run: |
-          if [ -z "$SLACK_BOT_TOKEN" ] ; then
-            echo "SLACK_BOT_TOKEN secret is missing from the workflow!"
-            exit 1
-          fi
-          if [[ "$NOTIFY_ON" != "success" && "$NOTIFY_ON" != "failure" && "$NOTIFY_ON" != "all" ]] ; then
-            echo "notify_on input is not valid. Must be one of: 'success', 'failure', or 'all'"
-            exit 1
-          fi
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          COMMIT_MESSAGE=$(git show -s --format=%s)
-          GITHUB_PR_URL=$(gh pr view --json url --jq .url || true)
-          GITHUB_PR_NUMBER=$(gh pr view --json number --jq .number || true)
-          GITHUB_RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          GITHUB_COMMIT_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
-          GITHUB_BRANCH_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/tree/$GITHUB_REF_NAME"
-          if [ -z "$GITHUB_PR_NUMBER" ] ; then
-            GITHUB_PR_MESSAGE=""
+          ADDITIONAL_VARIABLES: ${{ secrets.ADDITIONAL_VARIABLES }}
+        if: ${{ env.ADDITIONAL_VARIABLES }}
+        run: >
+          if echo '${{ env.ADDITIONAL_VARIABLES }}' | jq >/dev/null 2>&1; then
+            echo '${{ env.ADDITIONAL_VARIABLES }}' | jq -r 'to_entries[] | "\(.key) \(.value)"' | \
+              while read -r key value; do echo "$key=$value" >> $GITHUB_ENV && echo "Variable $key has been set"; done
           else
-            GITHUB_PR_MESSAGE="(PR <$GITHUB_PR_URL|#$GITHUB_PR_NUMBER>)"
+            echo "ADDITIONAL_VARIABLES secret you supplied is not a valid JSON object. Check the formatting of the secret."
+            exit 1
           fi
-          if [[ "$SUCCESS" = true && ("$NOTIFY_ON" = "success" || "$NOTIFY_ON" = "all") ]] ; then
-            curl -X POST https://slack.com/api/chat.postMessage \
-                 -H "Content-type: application/json; charset=utf-8" \
-                 -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-                 -s -S \
-                 -d @- <<- EOF
-                  {
-                    "channel": "$CHANNEL",
-                    "attachments": [
-                      {
-                        "color": "#19a974",
-                        "blocks": [
-                          {
-                            "type": "section",
-                            "text": {
-                              "type": "mrkdwn",
-                              "text": "$GITHUB_ACTOR's <$GITHUB_RUN_URL|build> on <$GITHUB_BRANCH_URL|$GITHUB_REF_NAME> passed $GITHUB_PR_MESSAGE \n _ $COMMIT_MESSAGE _ (<$GITHUB_COMMIT_URL|$SHORT_SHA>)"
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-          EOF
-          fi
-          if [[ "$FAILURE" = true && ("$NOTIFY_ON" = "failure" || "$NOTIFY_ON" = "all") ]] ; then
-            curl -X POST https://slack.com/api/chat.postMessage \
-                 -H "Content-type: application/json; charset=utf-8" \
-                 -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-                 -s -S \
-                 -d @- <<- EOF
-                  {
-                    "channel": "$CHANNEL",
-                    "attachments": [
-                      {
-                        "color": "#f75819",
-                        "blocks": [
-                          {
-                            "type": "section",
-                            "text": {
-                              "type": "mrkdwn",
-                              "text": "$GITHUB_ACTOR's <$GITHUB_RUN_URL|build> on <$GITHUB_BRANCH_URL|$GITHUB_REF_NAME> failed $GITHUB_PR_MESSAGE \n _ $COMMIT_MESSAGE _ (<$GITHUB_COMMIT_URL|$SHORT_SHA>)"
-                            }
-                          }
-                        ]
-                      }
-                    ]
-                  }
-          EOF
-          fi
+      - name: Git checkout
+        uses: actions/checkout@v3
+
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap-nextjs
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          env_vars: ${{ inputs.env_vars }}
+
+      - name: Run build
+        shell: bash
+        id: 'build'
+        run: 'npm run build'
+
+      - id: commit
+        uses: pr-mpt/actions-commit-hash@v1
+
+      - name: Create release folder
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ inputs.deploy_host }}
+          username: ${{ inputs.deploy_user }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 229
+          script: |
+            mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+      - name: Copy deployment to staging
+        uses: burnett01/rsync-deployments@5.2.1
+        with:
+          switches: -avzr
+          path: .next/standalone/
+          remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
+          remote_host: ${{ inputs.deploy_host }}
+          remote_port: 229
+          remote_user: ${{ inputs.deploy_user }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to staging
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ inputs.deploy_host }}
+          username: ${{ inputs.deploy_user }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 229
+          script: |
+            cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+      - name: Import Secrets
+        if: ${{ contains(inputs.features, 'secrets') }}
+        uses: hashicorp/vault-action@v2.4.0
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: ${{ secrets.VAULT_AUTH_METHOD }}
+          roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+          secrets: |
+            js/js-payroll-calculator/staging secrets | staging_secrets ;
+      - name: Add secrets to staging
+        if: ${{ contains(inputs.features, 'secrets') }}
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ inputs.deploy_host }}
+          username: ${{ inputs.deploy_user }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 229
+          script: |
+            cd ${{ inputs.deploy_to }}
+            ln -nfs releases/${{ steps.commit.outputs.short }}/ current
+            cd current
+            npm install @newrelic/next
+            echo "::add-mask::${{ env.staging_secrets }}" > .env
+            NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+      - name: Clean up release folder
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ inputs.deploy_host }}
+          username: ${{ inputs.deploy_user }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 229
+          script: |
+            cd ${{ inputs.deploy_to }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
