@@ -14,6 +14,10 @@ on:
         type: string
         default: ubuntu-latest
 
+      environment:
+        required: true
+        type: string
+
       # React or Angular
       # if not defined, use angular if angular.json is present, otherwise use react
       framework:
@@ -285,27 +289,27 @@ jobs:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 229
+          port: ${{ secrets.INSTANCE_PORT }}
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
-      - name: Copy deployment to staging
+      - name: Copy deployment
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
           path: .next/standalone/
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
-          remote_port: 229
+          remote_port: ${{ secrets.INSTANCE_PORT }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Deploy to staging
+      - name: Deploy to ${{ inputs.environment }}
         uses: appleboy/ssh-action@master
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 229
+          port: ${{ secrets.INSTANCE_PORT }}
           script: |
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
       - name: Import Secrets
@@ -325,7 +329,7 @@ jobs:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 229
+          port: ${{ secrets.INSTANCE_PORT }}
           script: |
             cd ${{ inputs.deploy_to }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
@@ -339,6 +343,80 @@ jobs:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 229
+          port: ${{ secrets.INSTANCE_PORT }}
           script: |
             cd ${{ inputs.deploy_to }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+      - name: Notify on Slack
+        env:
+          SUCCESS: ${{ steps.deploy-next-ssr.outcome == 'success' }}
+          FAILURE: ${{ steps.deploy-next-ssr.outcome == 'failure' }}
+          CHANNEL: ${{ inputs.slack_notification_channel }}
+          NOTIFY_ON: ${{ inputs.notify_on }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+        if: ${{ always() && inputs.slack_notification_channel }}
+        run: |
+          if [ -z "$SLACK_BOT_TOKEN" ] ; then
+            echo "SLACK_BOT_TOKEN secret is missing from the workflow!"
+            exit 1
+          fi
+          if [[ "$NOTIFY_ON" != "success" && "$NOTIFY_ON" != "failure" && "$NOTIFY_ON" != "all" ]] ; then
+            echo "notify_on input is not valid. Must be one of: 'success', 'failure', or 'all'"
+            exit 1
+          fi
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          FULL_SHA=$(git rev-parse HEAD)
+          COMMIT_MESSAGE=$(git show -s --format=%s)
+          GITHUB_RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          GITHUB_COMMIT_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$FULL_SHA"
+          if [[ "$SUCCESS" = true && ("$NOTIFY_ON" = "success" || "$NOTIFY_ON" = "all") ]] ; then
+            curl -X POST https://slack.com/api/chat.postMessage \
+                 -H "Content-type: application/json; charset=utf-8" \
+                 -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                 -s -S \
+                 -d @- <<- EOF
+                  {
+                    "channel": "$CHANNEL",
+                    "attachments": [
+                      {
+                        "color": "#19a974",
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": "$GITHUB_ACTOR <$GITHUB_RUN_URL|deployed> to *$DEPLOY_ENVIRONMENT*! :tada: \n _ $COMMIT_MESSAGE _ (<$GITHUB_COMMIT_URL|$SHORT_SHA>)"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          EOF
+          fi
+          if [[ "$FAILURE" = true && ("$NOTIFY_ON" = "failure" || "$NOTIFY_ON" = "all") ]] ; then
+            curl -X POST https://slack.com/api/chat.postMessage \
+                 -H "Content-type: application/json; charset=utf-8" \
+                 -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+                 -s -S \
+                 -d @- <<- EOF
+                  {
+                    "channel": "$CHANNEL",
+                    "attachments": [
+                      {
+                        "color": "#f75819",
+                        "blocks": [
+                          {
+                            "type": "section",
+                            "text": {
+                              "type": "mrkdwn",
+                              "text": "$GITHUB_ACTOR failed to <$GITHUB_RUN_URL|deploy> to *$DEPLOY_ENVIRONMENT*! :boom: \n _ $COMMIT_MESSAGE _ (<$GITHUB_COMMIT_URL|$SHORT_SHA>)"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+          EOF
+          fi
