@@ -331,7 +331,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.INSTANCE_PORT }}
           script: |
-            cd ${{ inputs.deploy_to }}
+            cd ${{ inputs.deploy_to || '/home/' + inputs.deploy_user + '/www/' + inputs.deploy_host }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
             npm install @newrelic/next
@@ -345,7 +345,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.INSTANCE_PORT }}
           script: |
-            cd ${{ inputs.deploy_to }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+            cd ${{ inputs.deploy_to || '/home/' + inputs.deploy_user + '/www/' + inputs.deploy_host }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
       - name: Notify on Slack
         env:
           SUCCESS: ${{ steps.deploy-next-ssr.outcome == 'success' }}
