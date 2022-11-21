@@ -22,11 +22,17 @@
 | `package_manager` | Package manager to use for the action. | all | false | Yarn if `yarn.lock` is present, npm otherwise |
 | `node_version` | Node.js version to use. | all | false | The one defined in `.node-version` |
 | `ci_steps` | Steps to run in the workflow, as a space separated string. Possible values are in a separate section above | all | true | N/A |
-| `features` | Features to enable, possible values right now are `''` and `'secrets'` | `deploy-next-ssr` | false | `''` |
+| `secrets` | Name of the vault to be used | `deploy-next-ssr` | false | N/A |
 | `deploy_host` | Host to deploy to | `deploy-next-ssr` | false | N/A |
 | `deploy_token` | Path where the app is deployed on the server | `deploy-next-ssr` | false | N/A |
 | `deploy_user` | User to deploy as | `deploy-next-ssr` | false | N/A |
+| `deploy_to` | Path where the app is deployed on the server | `deploy-next-ssr` | false | `/home/{{deploy_user}}/www/{{deploy_host}}` |
+| `deploy_port` | Port of the deploy server | `deploy-next-ssr` | false | N/A |
 | `workflow` | Path to the current workflow file | `analyze` | false | N/A |
+| `slack_notification_channel` | Slack channel to send notifications to. | `deploy-next-ssr` | false | `null` |
+| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy-next-ssr` | false | `all` |
+| `environment` | Environment to deploy to | `deploy-next-ssr` | true | N/A |
+| `newrelic` | Should we run server-side newrelic | `deploy-next-ssr` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
 
 #### Inputs that are not currently used, but might be in the future
 
@@ -34,8 +40,6 @@
 | --- | --- | --- | --- |
 | `framework` | Project type - React or Angular | false | `angular` if `angular.json` present in root, otherwise `react` |
 | `ssr` | Whether to build the app in SSR mode. | false | `false` |
-| `slack_notification_channel` | Slack channel to send notifications to. | false | `null` |
-| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | false | `all` |
 
 ### Secrets
 | property | description | required |
@@ -99,7 +103,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
       ci_steps: 'deploy-next-ssr'
-      features: 'secrets'
+      secrets: 'js-my-project'
       deploy_host: project-name.byinfinum.co
       deploy_to: '/home/js-project-name/www/project-name.byinfinum.co'
       deploy_user: 'js-project-name'
