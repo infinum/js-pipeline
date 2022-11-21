@@ -68,12 +68,14 @@ on:
         required: true
         type: string
 
-      # Optional features used in the project
-      # Valid values:
-      #   - 'secrets'
-      features:
+      # Secrets vault to be used
+      secrets:
         required: false
         type: string
+
+      newrelic:
+        required: false
+        type: boolean
 
       # The workflow that is used for bundle analysis
       workflow:
@@ -91,6 +93,10 @@ on:
       deploy_user:
         required: false
         type: string
+
+      deploy_port:
+        required: false
+        type: number
 
     secrets:
       VAULT_ADDR:
@@ -289,7 +295,7 @@ jobs:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.INSTANCE_PORT }}
+          port: ${{ inputs.deploy_port }}
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
       - name: Copy deployment
@@ -299,7 +305,7 @@ jobs:
           path: .next/standalone/
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
-          remote_port: ${{ secrets.INSTANCE_PORT }}
+          remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -309,11 +315,11 @@ jobs:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.INSTANCE_PORT }}
+          port: ${{ inputs.deploy_port }}
           script: |
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
       - name: Import Secrets
-        if: ${{ contains(inputs.features, 'secrets') }}
+        if: ${{ inputs.secrets }}
         uses: hashicorp/vault-action@v2.4.0
         with:
           url: ${{ secrets.VAULT_ADDR }}
@@ -321,31 +327,38 @@ jobs:
           roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
           secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           secrets: |
-            js/js-payroll-calculator/staging secrets | staging_secrets ;
-      - name: Add secrets to staging
-        if: ${{ contains(inputs.features, 'secrets') }}
+            js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
+      - name: Deploy the release
         uses: appleboy/ssh-action@master
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.INSTANCE_PORT }}
+          port: ${{ inputs.deploy_port }}
           script: |
-            cd ${{ inputs.deploy_to }}
+            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            npm install @newrelic/next
-            echo "::add-mask::${{ env.staging_secrets }}" > .env
-            NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+            if ${{env.app_secrets}} 
+            then
+              echo "::add-mask::${{ env.app_secrets }}" > .env
+            fi
+            if ${{ (inputs.newrelic || hashFiles('newrelic.js') ) && contains(inputs.ci_steps, 'deploy-next-ssr') }}
+            then
+              npm install @newrelic/next
+              NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+            else
+              passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+            fi
       - name: Clean up release folder
         uses: appleboy/ssh-action@master
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.INSTANCE_PORT }}
+          port: ${{ inputs.deploy_port }}
           script: |
-            cd ${{ inputs.deploy_to }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
       - name: Notify on Slack
         env:
           SUCCESS: ${{ steps.deploy-next-ssr.outcome == 'success' }}
