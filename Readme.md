@@ -44,6 +44,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 
 
 ### Secrets
+
 | property | description | required |
 | --- | --- | --- |
 | `VAULT_ADDR` | Vault URL | false |
@@ -94,7 +95,7 @@ jobs:
     with:
       ci_steps: 'deploy'
       secrets: 'js-my-project'
-      deploy_host: project-name.byinfinum.co
+      deploy_host: 'project-name.byinfinum.co'
       deploy_user: 'js-project-name'
       deploy_port: 22
     secrets:

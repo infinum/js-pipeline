@@ -60,7 +60,9 @@ The logic is as follows:
   fi
 
   # Tooling
-  if test -f "newrelic.js"; then
+  if ${{ inputs.newrelic || false }}; then
+    newrelic=${{ inputs.newrelic }}
+  elif [ -f newrelic.js ]; then
     newrelic=true
   else
     newrelic=false
@@ -83,11 +85,12 @@ The reasoning behind why Next.js is a special case of React:
 
 * [ ] Angular support
 * [ ] CSR React/Next support
+* [ ] Add Slack notifications for jobs other than deploy
 * [ ] Handle situation where SSR is passed as `false`
-* [ ] Handle situation where `newrelic` is passed
+* [ ] Handle situation where `newrelic` is passed as `false`
 * [ ] Add logic for the dist folder selection (should enable Node support)
 * [ ] Add support for S3/Cloudfront deployment
 * [ ] Add support for Docker deployment
-* [ ] Next detection based on package.json
-* [ ] Standalone build check for next
+* [ ] Next/React/Node detection based on package.json
+* [ ] Standalone build check for next (analyze next.config.js?)
 * [ ] Refactor to decrease the size of the main workflow file
