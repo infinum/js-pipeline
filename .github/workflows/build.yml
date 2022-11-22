@@ -18,13 +18,19 @@ on:
         required: true
         type: string
 
-      # React or Angular
-      # if not defined, use angular if angular.json is present, otherwise use react
+      # React, Next, Angular or Node
+      # if not defined:
+      # * use angular if angular.json is present
+      # * use next if next.config.js is present
+      # * otherwise use react
       framework:
         required: false
         type: string
 
       # Server-side rendering or client-side rendering
+      # if not defined:
+      # * use ssr if next.config.js is present
+      # * otherwise use csr
       ssr:
         required: false
         type: boolean
@@ -62,8 +68,9 @@ on:
       #   - 'lint'
       #   - 'test'
       #   - 'jest'
-      #   - 'build-next'
+      #   - 'build'
       #   - 'analyze'
+      #   - 'deploy'
       ci_steps:
         required: true
         type: string
@@ -125,25 +132,34 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap-nextjs
+      - name: Detect env
+        uses: ./.github/actions/detect-env
         with:
           runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
-      - name: Install JS packages (yarn)
+      - name: Install JS packages
         shell: bash
-        if: ${{ inputs.package_manager == 'yarn' || (inputs.package_manager != 'npm' && hashFiles('yarn.lock') != '') }}
-        run: yarn install --frozen-lockfile
-      - name: Install JS packages (npm)
-        shell: bash
-        if: ${{ inputs.package_manager == 'npm' || (inputs.package_manager != 'yarn' && hashFiles('yarn.lock') == '') }}
-        run: npm ci
-  build-next:
+        run: |
+          if [ "${{ env.package_manager }}" = "yarn" ]; then
+            yarn install --frozen-lockfile
+          else
+            npm ci
+          fi
+  build:
     needs: [setup]
-    name: 'Build next.js'
-    if: ${{ contains(inputs.ci_steps, 'build-next') || contains(inputs.ci_steps, 'analyze') }}
+    name: 'Build'
+    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
     steps:
       - name: Set up additional environment variables
@@ -160,13 +176,36 @@ jobs:
           fi
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap-nextjs
+      - name: Detect env
+        uses: ./.github/actions/detect-env
         with:
           runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
+      - name: Import Secrets
+        if: ${{ inputs.secrets }}
+        uses: hashicorp/vault-action@v2.4.3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: ${{ secrets.VAULT_AUTH_METHOD }}
+          roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+          secrets: |
+            js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
+      - name: Add secrets
+        if: ${{env.app_secrets}}
+        run: |
+          echo "::add-mask::${{ env.app_secrets }}" > .env
       - name: Run build
         shell: bash
         id: 'build'
@@ -188,12 +227,21 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap-nextjs
+      - name: Detect env
+        uses: ./.github/actions/detect-env
         with:
           runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
       - name: Run lint
         shell: bash
@@ -207,12 +255,21 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap-nextjs
+      - name: Detect env
+        uses: ./.github/actions/detect-env
         with:
           runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
       - name: Run test
         shell: bash
@@ -226,12 +283,21 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap-nextjs
+      - name: Detect env
+        uses: ./.github/actions/detect-env
         with:
           runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
       - name: Test Coverage
         id: testCoverage
@@ -241,7 +307,7 @@ jobs:
           runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
           delta: 0.5
   analyze:
-    needs: [build-next]
+    needs: [build]
     name: 'Analyze the Next.js bundle size'
     if: ${{ contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
@@ -252,10 +318,10 @@ jobs:
         uses: ./.github/actions/analyze
         with:
           workflow: ${{ inputs.workflow }}
-  deploy-next-ssr:
+  deploy:
     needs: [setup]
     name: 'Deploy the application'
-    if: ${{ contains(inputs.ci_steps, 'deploy-next-ssr') }}
+    if: ${{ contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
     steps:
       - name: Set up additional environment variables
@@ -272,13 +338,28 @@ jobs:
           fi
       - name: Git checkout
         uses: actions/checkout@v3
-
-      - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap-nextjs
+      - name: Detect env
+        uses: ./.github/actions/detect-env
         with:
           runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+
+      - name: Check unsupported
+        if: ${{ env.ssr == 'false' && env.framework != 'node' }}
+        run: |
+          echo "Only SSR and Node apps are currently supported for deployment"
+          exit 1
+
+      - name: 'Bootstrap up the Node.js environment'
+        uses: ./.github/actions/bootstrap
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
 
       - name: Run build
@@ -286,8 +367,20 @@ jobs:
         id: 'build'
         run: 'npm run build'
 
+      - name: Prepare Next.js standalone
+        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
+        run: |
+          mv ./.next/standalone/server.js ./.next/standalone/index.js;
+          cp -r ./public .next/standalone/public;
+          mkdir ./.next/standalone/public/_next;
+          cp -r ./.next/static ./.next/standalone/public/_next/static;
+          cp ./next.config.js ./.next/standalone/next.config.js
+          if ${{ env.newrelic == 'true' }}; then
+            cp ./newrelic.js ./.next/standalone/newrelic.js
+          fi
+
       - id: commit
-        uses: pr-mpt/actions-commit-hash@v1
+        uses: pr-mpt/actions-commit-hash@v2
 
       - name: Create release folder
         uses: appleboy/ssh-action@master
@@ -298,11 +391,25 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
-      - name: Copy deployment
+
+      - name: Copy deployment for Next.js
+        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
           path: .next/standalone/
+          remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
+          remote_host: ${{ inputs.deploy_host }}
+          remote_port: ${{ inputs.deploy_port }}
+          remote_user: ${{ inputs.deploy_user }}
+          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Copy deployment for other
+        if: ${{ env.framework != 'next' || env.ssr == 'false' }}
+        uses: burnett01/rsync-deployments@5.2.1
+        with:
+          switches: -avzr
+          path: .
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -318,9 +425,10 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+
       - name: Import Secrets
         if: ${{ inputs.secrets }}
-        uses: hashicorp/vault-action@v2.4.0
+        uses: hashicorp/vault-action@v2.4.3
         with:
           url: ${{ secrets.VAULT_ADDR }}
           method: ${{ secrets.VAULT_AUTH_METHOD }}
@@ -328,8 +436,10 @@ jobs:
           secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           secrets: |
             js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
+
       - name: Deploy the release
         uses: appleboy/ssh-action@master
+        id: deploy-release
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
@@ -343,13 +453,14 @@ jobs:
             then
               echo "::add-mask::${{ env.app_secrets }}" > .env
             fi
-            if ${{ (inputs.newrelic || hashFiles('newrelic.js') ) && contains(inputs.ci_steps, 'deploy-next-ssr') }}
+            if ${{ env.newrelic && contains(inputs.ci_steps, 'deploy') }}
             then
               npm install @newrelic/next
               NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
             else
               passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
             fi
+
       - name: Clean up release folder
         uses: appleboy/ssh-action@master
         with:
@@ -359,10 +470,11 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+
       - name: Notify on Slack
         env:
-          SUCCESS: ${{ steps.deploy-next-ssr.outcome == 'success' }}
-          FAILURE: ${{ steps.deploy-next-ssr.outcome == 'failure' }}
+          SUCCESS: ${{ steps.deploy-release.outcome == 'success' }}
+          FAILURE: ${{ steps.deploy-release.outcome != 'success' }}
           CHANNEL: ${{ inputs.slack_notification_channel }}
           NOTIFY_ON: ${{ inputs.notify_on }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

@@ -8,38 +8,45 @@
 | `test` | Runs `npm run test` |
 | `jest` | Runs Jest tests with coverage comparison (useful for PRs) |
 | `audit` | Runs `npm run audit` |
-| `build-next` | Builds Next.js app |
-| `deploy-next-ssr` | Deploys Next.js app with SSR |
+| `build` | Builds the app |
+| `deploy` | Deploys the app |
 | `analyze` | Runs a bundle analysis and comparison with the target branch (Next.js, WIP) |
 
 ## How to use it
 
 ### Inputs
 
+Inputs that should be defined in the workflow file:
+
+| property | description | Relevant jobs | required | default |
+| --- | --- | --- | --- | --- |
+| `ci_steps` | Steps to run in the workflow, as a space separated string. Possible values are in a separate section above | all | true | N/A |
+| `workflow` | Path to the current workflow file | `analyze` | false | N/A |
+| `secrets` | Name of the vault to be used | `deploy`, `build` | false | N/A |
+| `deploy_host` | Host to deploy to | `deploy` | false | N/A |
+| `deploy_token` | Path where the app is deployed on the server | `deploy` | false | N/A |
+| `deploy_user` | User to deploy as | `deploy` | false | N/A |
+| `deploy_port` | Port of the deploy server | `deploy` | false | N/A |
+| `slack_notification_channel` | Slack channel to send notifications to. | `deploy` | false | `null` |
+| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |
+| `environment` | Environment to deploy to | `deploy` | true | N/A |
+
+Inputs that may be defined in the workflow file, but have defaults that are usually fine:
+
 | property | description | Relevant jobs | required | default |
 | --- | --- | --- | --- | --- |
 | `runner` | Runner to use for the action (OS/version). | all | false | `ubuntu-latest` |
 | `package_manager` | Package manager to use for the action. | all | false | Yarn if `yarn.lock` is present, npm otherwise |
 | `node_version` | Node.js version to use. | all | false | The one defined in `.node-version` |
-| `ci_steps` | Steps to run in the workflow, as a space separated string. Possible values are in a separate section above | all | true | N/A |
-| `secrets` | Name of the vault to be used | `deploy-next-ssr` | false | N/A |
-| `deploy_host` | Host to deploy to | `deploy-next-ssr` | false | N/A |
-| `deploy_token` | Path where the app is deployed on the server | `deploy-next-ssr` | false | N/A |
-| `deploy_user` | User to deploy as | `deploy-next-ssr` | false | N/A |
-| `deploy_to` | Path where the app is deployed on the server | `deploy-next-ssr` | false | `/home/{{deploy_user}}/www/{{deploy_host}}` |
-| `deploy_port` | Port of the deploy server | `deploy-next-ssr` | false | N/A |
-| `workflow` | Path to the current workflow file | `analyze` | false | N/A |
-| `slack_notification_channel` | Slack channel to send notifications to. | `deploy-next-ssr` | false | `null` |
-| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy-next-ssr` | false | `all` |
-| `environment` | Environment to deploy to | `deploy-next-ssr` | true | N/A |
-| `newrelic` | Should we run server-side newrelic | `deploy-next-ssr` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
+| `framework` | Project type - supported values are `angular`, `react`, `next` and `node` | all | false | `angular` if `angular.json` present in root, `next` if `next.config.js` present in root, otherwise `react` |
+| `deploy_to` | Path where the app is deployed on the server | `deploy` | false | `/home/{{deploy_user}}/www/{{deploy_host}}` |
+| `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
+| `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
 
 #### Inputs that are not currently used, but might be in the future
 
 | property | description | required | default |
 | --- | --- | --- | --- |
-| `framework` | Project type - React or Angular | false | `angular` if `angular.json` present in root, otherwise `react` |
-| `ssr` | Whether to build the app in SSR mode. | false | `false` |
 
 ### Secrets
 | property | description | required |
@@ -49,7 +56,7 @@
 | `VAULT_AUTH_ROLE_ID` | Vault auth role ID | false |
 | `VAULT_AUTH_SECRET_ID` | Vault auth secret ID | false |
 | `SSH_PRIVATE_KEY` | Private SSH key used for deployment | false |
-| `SLACK_BOT_TOKEN` | Slack bot token for notifications (not yet used) | false |
+| `SLACK_BOT_TOKEN` | Slack bot token for notifications | false |
 | `ADDITIONAL_VARIABLES` | Additional ENV variables to pass to the pipeline (in a serialized JSON) | false |
 
 ## Recipes
@@ -102,10 +109,9 @@ jobs:
     name: Deploy
     uses: ./.github/workflows/build.yml
     with:
-      ci_steps: 'deploy-next-ssr'
+      ci_steps: 'deploy'
       secrets: 'js-my-project'
       deploy_host: project-name.byinfinum.co
-      deploy_to: '/home/js-project-name/www/project-name.byinfinum.co'
       deploy_user: 'js-project-name'
     secrets:
       ADDITIONAL_VARIABLES: '{}'
