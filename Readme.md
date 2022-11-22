@@ -57,19 +57,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 
 ## Recipes
 
-### Next.js with standalone build
-
-In order to prepare for deployment, the following script should be present in `package.json`:
-
-```json
-{
-  "scripts": {
-    "build": "next build; cp -r ./public .next/standalone/public; mkdir ./.next/standalone/public/_next; cp -r ./.next/static ./.next/standalone/public/_next/static; mv ./.next/standalone/server.js ./.next/standalone/index.js; cp ./next.config.js ./.next/standalone/next.config.js"
-  }
-}
-```
-
-#### Example build config
+## Example build config
 
 ```yaml
 # .github/workflows/pr.yml
@@ -88,7 +76,7 @@ jobs:
 
 ```
 
-#### Example deploy config
+### Example deploy config
 
 ```yaml
 # .github/workflows/deploy_staging.yml
