@@ -16,7 +16,7 @@
 
 ### Inputs
 
-Inputs that should be defined in the workflow file:
+Inputs that should be defined in the workflow file are listed bellow. They are not required if you're not using the job that requires them.
 
 | property | description | Relevant jobs | required | default |
 | --- | --- | --- | --- | --- |
@@ -24,11 +24,9 @@ Inputs that should be defined in the workflow file:
 | `workflow` | Path to the current workflow file | `analyze` | false | N/A |
 | `secrets` | Name of the vault to be used | `deploy`, `build` | false | N/A |
 | `deploy_host` | Host to deploy to | `deploy` | false | N/A |
-| `deploy_token` | Path where the app is deployed on the server | `deploy` | false | N/A |
 | `deploy_user` | User to deploy as | `deploy` | false | N/A |
 | `deploy_port` | Port of the deploy server | `deploy` | false | N/A |
-| `slack_notification_channel` | Slack channel to send notifications to. | `deploy` | false | `null` |
-| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |
+| `slack_notification_channel` | Slack channel to send notifications to. | `deploy` | false | N/A |
 | `environment` | Environment to deploy to | `deploy` | true | N/A |
 
 Inputs that may be defined in the workflow file, but have defaults that are usually fine:
@@ -42,6 +40,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | `deploy_to` | Path where the app is deployed on the server | `deploy` | false | `/home/{{deploy_user}}/www/{{deploy_host}}` |
 | `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
 | `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
+| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |
 
 
 ### Secrets
@@ -97,6 +96,7 @@ jobs:
       secrets: 'js-my-project'
       deploy_host: project-name.byinfinum.co
       deploy_user: 'js-project-name'
+      deploy_port: 22
     secrets:
       ADDITIONAL_VARIABLES: '{}'
       SSH_PRIVATE_KEY: ${{ secrets.STAGING_KEY }}
@@ -113,3 +113,21 @@ Other projects are not yet supported. Check the [Productive project](https://app
 ## Contributing
 
 For more details about the implementation, check the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+
+## License
+
+The [MIT License](LICENSE)
+
+## Credits
+
+js-pipeline is maintained and sponsored by
+[Infinum](https://www.infinum.com).
+
+<p align="center">
+  <a href='https://infinum.com'>
+    <picture>
+        <source srcset="https://assets.infinum.com/brand/logo/static/white.svg" media="(prefers-color-scheme: dark)">
+        <img src="https://assets.infinum.com/brand/logo/static/default.svg">
+    </picture>
+  </a>
+</p>
