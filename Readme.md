@@ -57,7 +57,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 
 ## Recipes
 
-## Example build config
+### Example build config
 
 ```yaml
 # .github/workflows/pr.yml
