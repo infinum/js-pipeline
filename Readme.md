@@ -43,10 +43,6 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
 | `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
 
-#### Inputs that are not currently used, but might be in the future
-
-| property | description | required | default |
-| --- | --- | --- | --- |
 
 ### Secrets
 | property | description | required |
