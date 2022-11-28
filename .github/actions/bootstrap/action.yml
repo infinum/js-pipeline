@@ -7,7 +7,7 @@ inputs:
   runner:
     required: false
     description: 'Selects the runner on which the workflow will run'
-    default: ubuntu-20.04
+    default: ubuntu-latest
 
   # Should npm or yarn be used to install dependencies?
   # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
@@ -19,6 +19,10 @@ inputs:
   node_version:
     required: false
     description: 'should generally be left undefined - it will default to the `.node-version` file in the root of the project'
+
+  framework:
+    required: true
+    description: 'The framework used in the project (angular, react, next, node)'
 
   env_vars:
     required: false
@@ -45,8 +49,9 @@ runs:
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: '.node-version'
-    - name: Cache node modules
+    - name: Cache node modules for Next.js
       uses: actions/cache@v3
+      if: ${{ inputs.framework == 'next' }}
       with:
         path: |
           node_modules
@@ -56,3 +61,13 @@ runs:
         # If source files changed but packages didn't, rebuild from a prior cache.
         restore-keys: |
           ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-
+    - name: Cache node modules for others
+      uses: actions/cache@v3
+      if: ${{ inputs.framework != 'next' }}
+      with:
+        path: node_modules
+        # Generate a new cache whenever packages or source files change.
+        key: ${{ runner.os }}-app-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+        # If source files changed but packages didn't, rebuild from a prior cache.
+        restore-keys: |
+          ${{ runner.os }}-app-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-

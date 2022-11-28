@@ -1,0 +1,82 @@
+name: Detect env
+description: 'Detect the project environment for which the action is running'
+
+inputs:
+  # Selects the runner on which the workflow will run
+  # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+  runner:
+    required: false
+    description: 'Selects the runner on which the workflow will run'
+    default: ubuntu-latest
+
+  framework:
+    required: false
+    description: 'The framework used in the project'
+
+  ssr:
+    required: false
+    description: 'Is the project using server-side rendering?'
+
+  package_manager:
+    required: false
+    description: 'Should npm or yarn be used to install dependencies? If not defined, use npm if `package-lock.json` is present, otherwise use yarn'
+
+  newrelic:
+    required: false
+    description: 'Should New Relic be used? If not defined, use New Relic if `newrelic.js` is present, otherwise do not use New Relic'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Git checkout
+      uses: actions/checkout@v3
+    - name: Detect framework
+      shell: bash
+      run: |
+        if ${{ inputs.framework || false }}; then
+          echo "framework=${{ inputs.framework }}" >> $GITHUB_ENV
+        elif [ -f angular.json ]; then
+          echo "framework=angular" >> $GITHUB_ENV
+        elif [ -f next.config.js ]; then
+          # This is fine for now since we only support standalone builds and this needs to be set in the next config
+          echo "framework=next" >> $GITHUB_ENV
+        else
+          echo "framework=react" >> $GITHUB_ENV
+        fi
+    - name: Detect SSR
+      shell: bash
+      run: |
+        if ${{ inputs.ssr || false }}; then
+          echo "ssr=${{ inputs.ssr }}" >> $GITHUB_ENV
+        elif [ -f next.config.js ]; then
+          echo "ssr=true" >> $GITHUB_ENV
+        else
+          echo "ssr=false" >> $GITHUB_ENV
+        fi
+    - name: Detect package manager
+      shell: bash
+      run: |
+        if ${{ inputs.package_manager || false }}; then
+          echo "package_manager=${{ inputs.package_manager }}" >> $GITHUB_ENV
+        elif [ -f package-lock.json ]; then
+          echo "package_manager=npm" >> $GITHUB_ENV
+        else
+          echo "package_manager=yarn" >> $GITHUB_ENV
+        fi
+    - name: Detect tooling
+      shell: bash
+      run: |
+        if ${{ inputs.newrelic || false }}; then
+          echo "newrelic=${{ inputs.newrelic }}" >> $GITHUB_ENV
+        elif [ -f newrelic.js ]; then
+          echo "newrelic=true" >> $GITHUB_ENV
+        else
+          echo "newrelic=false" >> $GITHUB_ENV
+        fi
+    - name: Summary
+      shell: bash
+      run: |
+        echo "Framework: ${{ env.framework }}"
+        echo "SSR: ${{ env.ssr }}"
+        echo "Package manager: ${{ env.package_manager }}"
+        echo "New Relic: ${{ env.newrelic }}"
