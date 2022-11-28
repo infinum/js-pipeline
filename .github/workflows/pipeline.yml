@@ -449,9 +449,9 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if [ '::add-mask::${{ env.app_secrets }}' ]
+            if [ "::add-mask::${{ env.app_secrets }}" ]
             then
-              echo '::add-mask::${{ env.app_secrets }}' > .env
+              echo "::add-mask::${{ env.app_secrets }}" > .env
             fi
             if [ ${{ env.newrelic }} ]
             then
@@ -471,8 +471,7 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
-            LATEST_RELEASE=$(ls -t | head -n 1)
-            ln -nfs ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/$LATEST_RELEASE/ current
+            ln -nfs ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/$(ls -t | head -n 1)/ current
             passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
