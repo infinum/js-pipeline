@@ -133,7 +133,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: ./.github/actions/detect-env
+        uses: infinum/js-pipeline/.github/actions/detect-env@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -141,7 +141,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap
+        uses: infinum/js-pipeline/.github/actions/bootstrap@master
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -177,7 +177,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: ./.github/actions/detect-env
+        uses: infinum/js-pipeline/.github/actions/detect-env@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -185,7 +185,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap
+        uses: infinum/js-pipeline/.github/actions/bootstrap@master
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -228,7 +228,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: ./.github/actions/detect-env
+        uses: infinum/js-pipeline/.github/actions/detect-env@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -236,7 +236,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap
+        uses: infinum/js-pipeline/.github/actions/bootstrap@master
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -256,7 +256,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: ./.github/actions/detect-env
+        uses: infinum/js-pipeline/.github/actions/detect-env@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -264,7 +264,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap
+        uses: infinum/js-pipeline/.github/actions/bootstrap@master
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -284,7 +284,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: ./.github/actions/detect-env
+        uses: infinum/js-pipeline/.github/actions/detect-env@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -292,7 +292,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap
+        uses: infinum/js-pipeline/.github/actions/bootstrap@master
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -315,7 +315,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: 'Analyze the bundle'
-        uses: ./.github/actions/analyze
+        uses: infinum/js-pipeline/.github/actions/analyze@master
         with:
           workflow: ${{ inputs.workflow }}
   deploy:
@@ -339,7 +339,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: ./.github/actions/detect-env
+        uses: infinum/js-pipeline/.github/actions/detect-env@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -354,7 +354,7 @@ jobs:
           exit 1
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: ./.github/actions/bootstrap
+        uses: infinum/js-pipeline/.github/actions/bootstrap@master
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
