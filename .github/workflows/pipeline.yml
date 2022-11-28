@@ -463,7 +463,7 @@ jobs:
 
       - name: Clean up failed release
         uses: appleboy/ssh-action@master
-        if: failure()
+        if: ${{ failure() }}
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
