@@ -446,13 +446,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ inputs.deploy_port }}
           script: |
-            SECRETS='${{ env.app_secrets }}'
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if [ $SECRETS ]
+            if [ '${{ env.app_secrets }}' ]
             then
-              echo $SECRETS > .env
+              echo '${{ env.app_secrets }}' > .env
             fi
             if [ ${{ env.newrelic }} ]
             then
