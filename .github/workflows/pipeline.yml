@@ -461,18 +461,18 @@ jobs:
               passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
             fi
 
-      # - name: Clean up failed release
-      #   uses: appleboy/ssh-action@master
-      #   if: ${{ failure() }}
-      #   with:
-      #     host: ${{ inputs.deploy_host }}
-      #     username: ${{ inputs.deploy_user }}
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     port: ${{ inputs.deploy_port }}
-      #     script: |
-      #       cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
-      #       cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
-      #       passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+      - name: Clean up failed release
+        uses: appleboy/ssh-action@master
+        if: ${{ failure() }}
+        with:
+          host: ${{ inputs.deploy_host }}
+          username: ${{ inputs.deploy_user }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ inputs.deploy_port }}
+          script: |
+            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
+            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
+            passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
         uses: appleboy/ssh-action@master
