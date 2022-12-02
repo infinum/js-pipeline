@@ -456,9 +456,9 @@ jobs:
             if ${{ env.newrelic }}
             then
               npm install @newrelic/next
-              NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+              NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
             else
-              passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+              passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
             fi
 
       - name: Clean up failed release
@@ -472,7 +472,7 @@ jobs:
           script: |
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
-            passenger-config restart-app ~/www/${{ inputs.deploy_host }}/current
+            passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
         uses: appleboy/ssh-action@master
