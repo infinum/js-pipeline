@@ -450,9 +450,9 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if [ "::add-mask::${{ env.app_secrets }}" ]
+            if [ "${{ env.app_secrets }}" ]
             then
-              echo "::add-mask::${{ env.app_secrets }}" > .env
+              echo "${{ env.app_secrets }}" > .env
             fi
             if ${{ env.newrelic }}
             then
