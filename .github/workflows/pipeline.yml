@@ -372,8 +372,7 @@ jobs:
         run: |
           mv ./.next/standalone/server.js ./.next/standalone/index.js;
           cp -r ./public .next/standalone/public;
-          mkdir ./.next/standalone/public/_next;
-          cp -r ./.next/static ./.next/standalone/public/_next/static;
+          cp -r ./.next/static ./.next/standalone/.next/static;
           cp ./next.config.js ./.next/standalone/next.config.js
           cp ./.node-version  ./.next/standalone/.node-version
           if ${{ env.newrelic == 'true' }}; then
