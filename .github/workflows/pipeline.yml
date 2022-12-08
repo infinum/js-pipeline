@@ -517,6 +517,8 @@ jobs:
                  -d @- <<- EOF
                   {
                     "channel": "$CHANNEL",
+                    "icon_url": "https://i.imgur.com/v6bLyxF.png",
+                    "username": "GitHub Deploy Action",
                     "attachments": [
                       {
                         "color": "#19a974",
@@ -542,6 +544,8 @@ jobs:
                  -d @- <<- EOF
                   {
                     "channel": "$CHANNEL",
+                    "icon_url": "https://i.imgur.com/v6bLyxF.png",
+                    "username": "GitHub Deploy Action",
                     "attachments": [
                       {
                         "color": "#f75819",
