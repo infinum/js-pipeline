@@ -108,6 +108,7 @@ on:
       project_icon:
         required: false
         type: string
+        default: 'https://i.imgur.com/v6bLyxF.png'
 
     secrets:
       VAULT_ADDR:
@@ -523,7 +524,7 @@ jobs:
                  -d @- <<- EOF
                   {
                     "channel": "$CHANNEL",
-                    "icon_url": ${{ inputs.project_icon || "https://i.imgur.com/v6bLyxF.png"}},
+                    "icon_url": ${{ inputs.project_icon }},
                     "username": "GitHub Deploy Action",
                     "attachments": [
                       {
@@ -550,7 +551,7 @@ jobs:
                  -d @- <<- EOF
                   {
                     "channel": "$CHANNEL",
-                    "icon_url": ${{ inputs.project_icon || "https://i.imgur.com/v6bLyxF.png"}},
+                    "icon_url": ${{ inputs.project_icon }},
                     "username": "GitHub Deploy Action",
                     "attachments": [
                       {
