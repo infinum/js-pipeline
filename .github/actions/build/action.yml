@@ -48,13 +48,13 @@ inputs:
   VAULT_ADDR:
     required: false
     description: 'Vault address'
-  VAULT_AUTH_METHOD:
+  VAULT_ACTION_METHOD:
     required: false
     description: 'Vault authentication method'
-  VAULT_AUTH_ROLE_ID:
+  VAULT_ACTION_ROLE_ID:
     required: false
     description: 'Vault authentication role ID'
-  VAULT_AUTH_SECRET_ID:
+  VAULT_ACTION_SECRET_ID:
     required: false
     description: 'Vault authentication secret ID'
 
@@ -102,9 +102,9 @@ runs:
       uses: hashicorp/vault-action@v2.4.3
       with:
         url: ${{ inputs.VAULT_ADDR }}
-        method: ${{ inputs.VAULT_AUTH_METHOD }}
-        roleId: ${{ inputs.VAULT_AUTH_ROLE_ID }}
-        secretId: ${{ inputs.VAULT_AUTH_SECRET_ID }}
+        method: ${{ inputs.VAULT_ACTION_METHOD }}
+        roleId: ${{ inputs.VAULT_ACTION_ROLE_ID }}
+        secretId: ${{ inputs.VAULT_ACTION_SECRET_ID }}
         secrets: |
           js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
     - name: Add secrets
