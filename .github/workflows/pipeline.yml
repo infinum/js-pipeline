@@ -272,7 +272,7 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Test Coverage
         id: testCoverage
-        uses: anuraag016/Jest-Coverage-Diff@v1
+        uses: anuraag016/Jest-Coverage-Diff@master
         with:
           fullCoverageDiff: false
           runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
@@ -339,7 +339,7 @@ jobs:
         uses: pr-mpt/actions-commit-hash@v2
 
       - name: Create release folder
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
@@ -373,7 +373,7 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy to ${{ inputs.environment }}
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
@@ -383,7 +383,7 @@ jobs:
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
       - name: Deploy the release
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.6
         id: deploy-release
         with:
           host: ${{ inputs.deploy_host }}
@@ -403,7 +403,7 @@ jobs:
             fi
 
       - name: Clean up failed release
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.6
         if: ${{ failure() }}
         with:
           host: ${{ inputs.deploy_host }}
@@ -416,7 +416,7 @@ jobs:
             passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
-        uses: appleboy/ssh-action@v1
+        uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
