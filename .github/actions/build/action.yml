@@ -93,7 +93,7 @@ runs:
         framework: ${{ env.framework }}
         env_vars: ${{ inputs.env_vars }}
     - name: Debug
-      if: ${{env.app_secrets}}
+      if: ${{ inputs.secrets }}
       shell: bash
       run: |
         echo "Secrets import starting"
