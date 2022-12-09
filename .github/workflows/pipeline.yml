@@ -319,7 +319,7 @@ jobs:
           exit 1
 
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build
+        uses: infinum/js-pipeline/.github/actions/build@58f58a70de1663a3668bc57e7877e9654a10e563
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
