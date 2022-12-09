@@ -63,7 +63,7 @@ runs:
   steps:
     - name: Set up additional environment variables
       env:
-        ADDITIONAL_VARIABLES: ${{ input.env_vars }}
+        ADDITIONAL_VARIABLES: ${{ inputs.env_vars }}
       if: ${{ env.ADDITIONAL_VARIABLES }}
       shell: bash
       run: >
