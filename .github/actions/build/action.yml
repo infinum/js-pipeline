@@ -89,14 +89,3 @@ runs:
       shell: bash
       id: 'build'
       run: 'npm run build'
-    - name: Prepare artifact for Next.js
-      shell: bash
-      if: ${{ env.framework == 'next' }}
-      id: 'prepare-artifact'
-      run: 'rm -rf .next/cache'
-    - name: Upload artifacts for Next.js
-      if: ${{ env.framework == 'next' }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: 'build'
-        path: .next/**

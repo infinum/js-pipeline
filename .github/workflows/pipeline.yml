@@ -138,7 +138,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@master
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -146,7 +146,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@master
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -170,7 +170,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@master
+        uses: infinum/js-pipeline/.github/actions/build@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -179,6 +179,17 @@ jobs:
           node_version: ${{ inputs.node_version }}
           newrelic: ${{ inputs.newrelic }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Prepare artifact for Next.js
+        shell: bash
+        if: ${{ env.framework == 'next' }}
+        id: 'prepare-artifact'
+        run: 'rm -rf .next/cache'
+      - name: Upload artifacts for Next.js
+        if: ${{ env.framework == 'next' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'build'
+          path: .next/**
   lint:
     needs: [setup]
     name: 'Lint the code'
@@ -188,7 +199,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@master
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -196,7 +207,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@master
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -216,7 +227,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@master
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -224,7 +235,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@master
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -244,7 +255,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@master
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -252,7 +263,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@master
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -261,7 +272,7 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Test Coverage
         id: testCoverage
-        uses: anuraag016/Jest-Coverage-Diff@master
+        uses: anuraag016/Jest-Coverage-Diff@v1
         with:
           fullCoverageDiff: false
           runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
@@ -275,7 +286,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@master
+        uses: infinum/js-pipeline/.github/actions/analyze@v1
         with:
           workflow: ${{ inputs.workflow }}
   deploy:
@@ -284,22 +295,10 @@ jobs:
     if: ${{ contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
     steps:
-      - name: Set up additional environment variables
-        env:
-          ADDITIONAL_VARIABLES: ${{ secrets.ADDITIONAL_VARIABLES }}
-        if: ${{ env.ADDITIONAL_VARIABLES }}
-        run: >
-          if echo '${{ env.ADDITIONAL_VARIABLES }}' | jq >/dev/null 2>&1; then
-            echo '${{ env.ADDITIONAL_VARIABLES }}' | jq -r 'to_entries[] | "\(.key) \(.value)"' | \
-              while read -r key value; do echo "$key=$value" >> $GITHUB_ENV && echo "Variable $key has been set"; done
-          else
-            echo "ADDITIONAL_VARIABLES secret you supplied is not a valid JSON object. Check the formatting of the secret."
-            exit 1
-          fi
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@master
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -313,37 +312,16 @@ jobs:
           echo "Only SSR and Node apps are currently supported for deployment"
           exit 1
 
-      - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@master
+      - name: Build
+        uses: infinum/js-pipeline/.github/actions/build@v1
         with:
           runner: ${{ inputs.runner }}
-          package_manager: ${{ env.package_manager }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.framework }}
+          newrelic: ${{ inputs.newrelic }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-
-      - name: Import Secrets
-        if: ${{ inputs.secrets }}
-        uses: hashicorp/vault-action@v2.4.3
-        with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: ${{ secrets.VAULT_AUTH_METHOD }}
-          roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
-          secrets: |
-            js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
-
-      - name: Inject secrets
-        run: |
-          if [ "${{ env.app_secrets }}" ]
-          then
-            echo "${{ env.app_secrets }}" > .env
-          fi
-
-      - name: Run build
-        shell: bash
-        id: 'build'
-        run: 'npm run build'
 
       - name: Prepare Next.js standalone
         if: ${{ env.framework == 'next' && env.ssr == 'true' }}
@@ -361,7 +339,7 @@ jobs:
         uses: pr-mpt/actions-commit-hash@v2
 
       - name: Create release folder
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
@@ -395,7 +373,7 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy to ${{ inputs.environment }}
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
@@ -405,7 +383,7 @@ jobs:
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
       - name: Deploy the release
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         id: deploy-release
         with:
           host: ${{ inputs.deploy_host }}
@@ -425,7 +403,7 @@ jobs:
             fi
 
       - name: Clean up failed release
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         if: ${{ failure() }}
         with:
           host: ${{ inputs.deploy_host }}
@@ -438,7 +416,7 @@ jobs:
             passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1
         with:
           host: ${{ inputs.deploy_host }}
           username: ${{ inputs.deploy_user }}
