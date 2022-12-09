@@ -107,6 +107,7 @@ runs:
       shell: bash
       run: |
         echo "::add-mask::${{ env.app_secrets }}" > .env
+        echo "Secrets have been added to the .env file"
     - name: Run build
       shell: bash
       id: 'build'
