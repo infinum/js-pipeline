@@ -178,6 +178,8 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           node_version: ${{ inputs.node_version }}
           newrelic: ${{ inputs.newrelic }}
+          environment: ${{ inputs.environment }}
+          secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Prepare artifact for Next.js
         shell: bash
@@ -321,6 +323,8 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           node_version: ${{ inputs.node_version }}
           newrelic: ${{ inputs.newrelic }}
+          environment: ${{ inputs.environment }}
+          secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
 
       - name: Prepare Next.js standalone

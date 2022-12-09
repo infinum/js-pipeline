@@ -32,6 +32,14 @@ inputs:
     required: false
     description: 'Should New Relic be used? If not defined, use New Relic if `newrelic.js` is present, otherwise do not use New Relic'
 
+  secrets:
+    required: false
+    description: 'Secrets vault to be used'
+
+  environment:
+    required: false
+    description: 'Environment to be used'
+
   env_vars:
     required: false
     description: 'Additional environment variables set in the workflow (in the JSON format)'
