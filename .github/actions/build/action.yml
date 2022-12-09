@@ -92,6 +92,11 @@ runs:
         node_version: ${{ inputs.node_version }}
         framework: ${{ env.framework }}
         env_vars: ${{ inputs.env_vars }}
+    - name: Debug
+      if: ${{env.app_secrets}}
+      shell: bash
+      run: |
+        echo "Secrets import starting"
     - name: Import Secrets
       if: ${{ inputs.secrets }}
       uses: hashicorp/vault-action@v2.4.3
