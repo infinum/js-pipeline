@@ -394,8 +394,8 @@ jobs:
         if: ${{ env.framework == 'next' && env.ssr == 'true' }}
         run: |
           mv ./.next/standalone/server.js ./.next/standalone/index.js
-          cp -r ./public .next/standalone/public
-          cp -r ./.next/static ./.next/standalone/.next/static
+          cp -r ./public .next/standalone
+          cp -r ./.next/static ./.next/standalone/.next
           cp ./next.config.js ./.next/standalone/next.config.js
           cp ./.node-version  ./.next/standalone/.node-version
           if ${{ env.newrelic == 'true' }}; then
