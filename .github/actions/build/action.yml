@@ -44,12 +44,26 @@ inputs:
     required: false
     description: 'Additional environment variables set in the workflow (in the JSON format)'
 
+  # vault:
+  VAULT_ADDR:
+    required: false
+    description: 'Vault address'
+  VAULT_AUTH_METHOD:
+    required: false
+    description: 'Vault authentication method'
+  VAULT_AUTH_ROLE_ID:
+    required: false
+    description: 'Vault authentication role ID'
+  VAULT_AUTH_SECRET_ID:
+    required: false
+    description: 'Vault authentication secret ID'
+
 runs:
   using: 'composite'
   steps:
     - name: Set up additional environment variables
       env:
-        ADDITIONAL_VARIABLES: ${{ secrets.ADDITIONAL_VARIABLES }}
+        ADDITIONAL_VARIABLES: ${{ input.env_vars }}
       if: ${{ env.ADDITIONAL_VARIABLES }}
       shell: bash
       run: >
@@ -82,10 +96,10 @@ runs:
       if: ${{ inputs.secrets }}
       uses: hashicorp/vault-action@v2.4.3
       with:
-        url: ${{ secrets.VAULT_ADDR }}
-        method: ${{ secrets.VAULT_AUTH_METHOD }}
-        roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-        secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+        url: ${{ inputs.VAULT_ADDR }}
+        method: ${{ inputs.VAULT_AUTH_METHOD }}
+        roleId: ${{ inputs.VAULT_AUTH_ROLE_ID }}
+        secretId: ${{ inputs.VAULT_AUTH_SECRET_ID }}
         secrets: |
           js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
     - name: Add secrets
