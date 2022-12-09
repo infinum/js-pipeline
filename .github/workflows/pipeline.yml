@@ -332,8 +332,8 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
-          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
 
       - name: Prepare Next.js standalone
         if: ${{ env.framework == 'next' && env.ssr == 'true' }}
