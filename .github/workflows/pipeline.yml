@@ -362,6 +362,24 @@ jobs:
           framework: ${{ env.framework }}
           env_vars: ${{ inputs.env_vars }}
 
+      - name: Import Secrets
+        if: ${{ inputs.secrets }}
+        uses: hashicorp/vault-action@v2.4.3
+        with:
+          url: ${{ secrets.VAULT_ADDR }}
+          method: ${{ secrets.VAULT_AUTH_METHOD }}
+          roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+          secrets: |
+            js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
+
+      - name: Inject secrets
+        run: |
+          if [ "${{ env.app_secrets }}" ]
+          then
+            echo "${{ env.app_secrets }}" > .env
+          fi
+
       - name: Run build
         shell: bash
         id: 'build'
@@ -426,17 +444,6 @@ jobs:
           script: |
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
-      - name: Import Secrets
-        if: ${{ inputs.secrets }}
-        uses: hashicorp/vault-action@v2.4.3
-        with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: ${{ secrets.VAULT_AUTH_METHOD }}
-          roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
-          secrets: |
-            js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
-
       - name: Deploy the release
         uses: appleboy/ssh-action@master
         id: deploy-release
@@ -449,10 +456,6 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if [ "${{ env.app_secrets }}" ]
-            then
-              echo "${{ env.app_secrets }}" > .env
-            fi
             if ${{ env.newrelic }}
             then
               npm install @newrelic/next
