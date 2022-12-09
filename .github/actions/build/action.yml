@@ -1,0 +1,102 @@
+name: Bootstrap
+description: 'Bootstrap the project'
+
+inputs:
+  # Selects the runner on which the workflow will run
+  # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+  runner:
+    required: false
+    description: 'Selects the runner on which the workflow will run'
+    default: ubuntu-latest
+
+  # Should npm or yarn be used to install dependencies?
+  # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
+  package_manager:
+    required: false
+    description: 'Should npm or yarn be used to install dependencies? If not defined, use npm if `package-lock.json` is present, otherwise use yarn'
+
+  # should generally be left undefined - it will default to the `.node-version` file in the root of the project
+  node_version:
+    required: false
+    description: 'should generally be left undefined - it will default to the `.node-version` file in the root of the project'
+
+  framework:
+    required: true
+    description: 'The framework used in the project (angular, react, next, node)'
+
+  ssr:
+    required: false
+    description: 'Is the project using server-side rendering?'
+
+  newrelic:
+    required: false
+    description: 'Should New Relic be used? If not defined, use New Relic if `newrelic.js` is present, otherwise do not use New Relic'
+
+  env_vars:
+    required: false
+    description: 'Additional environment variables set in the workflow (in the JSON format)'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up additional environment variables
+      env:
+        ADDITIONAL_VARIABLES: ${{ secrets.ADDITIONAL_VARIABLES }}
+      if: ${{ env.ADDITIONAL_VARIABLES }}
+      shell: bash
+      run: >
+        if echo '${{ env.ADDITIONAL_VARIABLES }}' | jq >/dev/null 2>&1; then
+          echo '${{ env.ADDITIONAL_VARIABLES }}' | jq -r 'to_entries[] | "\(.key) \(.value)"' | \
+            while read -r key value; do echo "$key=$value" >> $GITHUB_ENV && echo "Variable $key has been set"; done
+        else
+          echo "ADDITIONAL_VARIABLES secret you supplied is not a valid JSON object. Check the formatting of the secret."
+          exit 1
+        fi
+    - name: Git checkout
+      uses: actions/checkout@v3
+    - name: Detect env
+      uses: infinum/js-pipeline/.github/actions/detect-env@master
+      with:
+        runner: ${{ inputs.runner }}
+        framework: ${{ inputs.framework }}
+        ssr: ${{ inputs.ssr }}
+        package_manager: ${{ inputs.package_manager }}
+        newrelic: ${{ inputs.newrelic }}
+    - name: 'Bootstrap up the Node.js environment'
+      uses: infinum/js-pipeline/.github/actions/bootstrap@master
+      with:
+        runner: ${{ inputs.runner }}
+        package_manager: ${{ env.package_manager }}
+        node_version: ${{ inputs.node_version }}
+        framework: ${{ env.framework }}
+        env_vars: ${{ inputs.env_vars }}
+    - name: Import Secrets
+      if: ${{ inputs.secrets }}
+      uses: hashicorp/vault-action@v2.4.3
+      with:
+        url: ${{ secrets.VAULT_ADDR }}
+        method: ${{ secrets.VAULT_AUTH_METHOD }}
+        roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+        secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+        secrets: |
+          js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
+    - name: Add secrets
+      if: ${{env.app_secrets}}
+      shell: bash
+      run: |
+        echo "::add-mask::${{ env.app_secrets }}" > .env
+    - name: Run build
+      shell: bash
+      id: 'build'
+      run: 'npm run build'
+    - name: Prepare artifact for Next.js
+      shell: bash
+      if: ${{ env.framework == 'next' }}
+      id: 'prepare-artifact'
+      run: 'rm -rf .next/cache'
+    - name: Upload artifacts for Next.js
+      if: ${{ env.framework == 'next' }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'build'
+        path: .next/**

@@ -152,7 +152,7 @@ jobs:
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
-          env_vars: ${{ inputs.env_vars }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Install JS packages
         shell: bash
         run: |
@@ -167,63 +167,18 @@ jobs:
     if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
     steps:
-      - name: Set up additional environment variables
-        env:
-          ADDITIONAL_VARIABLES: ${{ secrets.ADDITIONAL_VARIABLES }}
-        if: ${{ env.ADDITIONAL_VARIABLES }}
-        run: >
-          if echo '${{ env.ADDITIONAL_VARIABLES }}' | jq >/dev/null 2>&1; then
-            echo '${{ env.ADDITIONAL_VARIABLES }}' | jq -r 'to_entries[] | "\(.key) \(.value)"' | \
-              while read -r key value; do echo "$key=$value" >> $GITHUB_ENV && echo "Variable $key has been set"; done
-          else
-            echo "ADDITIONAL_VARIABLES secret you supplied is not a valid JSON object. Check the formatting of the secret."
-            exit 1
-          fi
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@master
+      - name: Build
+        uses: infinum/js-pipeline/.github/actions/build@master
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
           ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
-          newrelic: ${{ inputs.newrelic }}
-      - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@master
-        with:
-          runner: ${{ inputs.runner }}
-          package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.framework }}
-          env_vars: ${{ inputs.env_vars }}
-      - name: Import Secrets
-        if: ${{ inputs.secrets }}
-        uses: hashicorp/vault-action@v2.4.3
-        with:
-          url: ${{ secrets.VAULT_ADDR }}
-          method: ${{ secrets.VAULT_AUTH_METHOD }}
-          roleId: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-          secretId: ${{ secrets.VAULT_AUTH_SECRET_ID }}
-          secrets: |
-            js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
-      - name: Add secrets
-        if: ${{env.app_secrets}}
-        run: |
-          echo "::add-mask::${{ env.app_secrets }}" > .env
-      - name: Run build
-        shell: bash
-        id: 'build'
-        run: 'npm run build'
-      - name: Prepare artifact
-        shell: bash
-        id: 'prepare-artifact'
-        run: 'rm -rf .next/cache'
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: 'build'
-          path: .next/**
+          newrelic: ${{ inputs.newrelic }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
   lint:
     needs: [setup]
     name: 'Lint the code'
@@ -247,7 +202,7 @@ jobs:
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
-          env_vars: ${{ inputs.env_vars }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Run lint
         shell: bash
         id: 'lint'
@@ -275,7 +230,7 @@ jobs:
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
-          env_vars: ${{ inputs.env_vars }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Run test
         shell: bash
         id: 'test'
@@ -303,7 +258,7 @@ jobs:
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
-          env_vars: ${{ inputs.env_vars }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Test Coverage
         id: testCoverage
         uses: anuraag016/Jest-Coverage-Diff@master
@@ -365,7 +320,7 @@ jobs:
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
-          env_vars: ${{ inputs.env_vars }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
 
       - name: Import Secrets
         if: ${{ inputs.secrets }}
