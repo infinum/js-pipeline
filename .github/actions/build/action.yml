@@ -116,4 +116,4 @@ runs:
     - name: Run build
       shell: bash
       id: 'build'
-      run: 'npm run build'
+      run: 'NEXT_TELEMETRY_DISABLED=1 npm run build'
