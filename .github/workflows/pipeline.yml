@@ -146,21 +146,13 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        uses: infinum/js-pipeline/.github/actions/bootstrap@install-tweaks
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-      - name: Install JS packages
-        shell: bash
-        run: |
-          if [ "${{ env.package_manager }}" = "yarn" ]; then
-            yarn install --frozen-lockfile
-          else
-            npm ci
-          fi
   build:
     needs: [setup]
     name: 'Build'
@@ -213,7 +205,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        uses: infinum/js-pipeline/.github/actions/bootstrap@install-tweaks
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -241,7 +233,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        uses: infinum/js-pipeline/.github/actions/bootstrap@install-tweaks
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -269,7 +261,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        uses: infinum/js-pipeline/.github/actions/bootstrap@install-tweaks
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}

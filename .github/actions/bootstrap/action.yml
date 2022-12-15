@@ -71,3 +71,12 @@ runs:
         # If source files changed but packages didn't, rebuild from a prior cache.
         restore-keys: |
           ${{ runner.os }}-app-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-
+    - name: Install JS packages
+      shell: bash
+      run: |
+        if [ "${{ inputs.package_manager }}" = "yarn" ]; then
+          yarn install --frozen-lockfile
+        else
+          npm ci
+          npm cache verify
+        fi
