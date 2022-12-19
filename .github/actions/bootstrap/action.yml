@@ -75,3 +75,12 @@ runs:
         key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}
         restore-keys: |
           ${{ runner.os }}-npm-
+    - name: Install JS packages
+      shell: bash
+      run: |
+        if [ "${{ inputs.package_manager }}" = "yarn" ]; then
+          yarn install --frozen-lockfile
+        else
+          npm ci
+          npm cache verify
+        fi

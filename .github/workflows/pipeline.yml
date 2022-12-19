@@ -153,14 +153,6 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-      - name: Install JS packages
-        shell: bash
-        run: |
-          if [ "${{ env.package_manager }}" = "yarn" ]; then
-            yarn install --frozen-lockfile
-          else
-            npm ci
-          fi
   build:
     needs: [setup]
     name: 'Build'
