@@ -461,7 +461,7 @@ jobs:
                  -d @- <<- EOF
                   {
                     "channel": "$CHANNEL",
-                    "icon_url": ${{ inputs.project_icon }},
+                    "icon_url": "${{ inputs.project_icon }}",
                     "username": "GitHub Deploy Action",
                     "attachments": [
                       {
