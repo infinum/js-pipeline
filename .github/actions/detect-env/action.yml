@@ -79,10 +79,8 @@ runs:
         fi
     - name: Detect build path
       shell: bash
-      # String assignments ./ ?
-      # Maybe add another input for artifact path and add logical OR in expressions?
       run: |
-        if ${{ inputs.dist_path }}; then
+        if ${{ inputs.dist_path || false }}; then
           echo "dist_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
           echo "artifact_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
         elif [ "${{ env.framework }}" == "next" ]; then
