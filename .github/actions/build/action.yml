@@ -44,6 +44,10 @@ inputs:
     required: false
     description: 'Additional environment variables set in the workflow (in the JSON format)'
 
+  dist_path:
+    required: false
+    description: 'Path to dist folder. If not defined, a path based on framework will be used.'
+
   # vault:
   VAULT_ADDR:
     required: false
@@ -84,6 +88,7 @@ runs:
         ssr: ${{ inputs.ssr }}
         package_manager: ${{ inputs.package_manager }}
         newrelic: ${{ inputs.newrelic }}
+        dist_path: ${{ inputs.dist_path }}
     - name: 'Bootstrap up the Node.js environment'
       uses: infinum/js-pipeline/.github/actions/bootstrap@master
       with:

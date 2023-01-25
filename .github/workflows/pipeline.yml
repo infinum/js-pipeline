@@ -110,6 +110,10 @@ on:
         type: string
         default: 'https://i.imgur.com/v6bLyxF.png'
 
+      dist_path:
+        required: false
+        type: string
+
     secrets:
       VAULT_ADDR:
         required: false
@@ -145,6 +149,7 @@ jobs:
           ssr: ${{ inputs.ssr }}
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
+          dist_path: ${{ inputs.dist_path }}
       - name: 'Bootstrap up the Node.js environment'
         uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
@@ -173,6 +178,7 @@ jobs:
           environment: ${{ inputs.environment }}
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          dist_path: ${{ inputs.dist_path }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
@@ -187,7 +193,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: 'build'
-          path: .next/**
+          path: ${{ env.artifact_path }}
+      - name: Generic upload artifacts
+        if: ${{ env.framework != 'next' || env.ssr == 'false' }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'build'
+          path: ${{ env.dist_path }}
   lint:
     needs: [setup]
     name: 'Lint the code'
@@ -322,6 +334,7 @@ jobs:
           environment: ${{ inputs.environment }}
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          dist_path: ${{ inputs.dist_path }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
@@ -357,7 +370,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: .next/standalone/
+          path: ${{ env.dist_path }}
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -369,7 +382,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: .
+          path: ${{ env.dist_path }}
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
