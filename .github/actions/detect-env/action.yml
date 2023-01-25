@@ -80,7 +80,7 @@ runs:
     - name: Detect build path
       shell: bash
       run: |
-        if [ "${{ inputs.dist_path }}" != ""]; then
+        if "${{ inputs.dist_path != '' }}"; then
           echo "dist_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
           echo "artifact_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
         elif [ "${{ env.framework }}" == "next" ]; then
