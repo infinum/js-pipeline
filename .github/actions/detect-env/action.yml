@@ -79,6 +79,7 @@ runs:
         fi
     - name: Detect build path
       shell: bash
+      # This needs to be adjusted to include SSR condition
       run: |
         if "${{ inputs.dist_path != '' }}"; then
           echo "dist_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
