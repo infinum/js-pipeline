@@ -220,7 +220,7 @@ jobs:
 
       # Change from here
       - name: Create release folder
-        if: ${ env.ssr == 'true' }}
+        if: ${{ env.ssr == 'true' }}
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ inputs.deploy_host }}
