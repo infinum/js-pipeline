@@ -128,6 +128,15 @@ on:
         required: false
       SSH_PRIVATE_KEY:
         required: false
+      # Check with Maks if this inputs are needed or maybe it the action will have access to those secrets on own
+      AWS_ACCESS_KEY_ID:
+        required: false
+      AWS_SECRET_ACCESS_KEY:
+        required: false
+      AWS_REGION:
+        required: false
+      BUCKET_NAME:
+        required: false
 
       # Additional environment variables set in the workflow
       # Format: JSON object with string values (key becomes env variable name, value becomes env variable value)
@@ -135,7 +144,7 @@ on:
       ADDITIONAL_VARIABLES:
         required: false
 jobs:
-# Not sure if this is needed or will it be taken from previous workflow?
+  # Not sure if this is needed or will it be taken from previous workflow?
   setup:
     name: 'Environment setup'
     runs-on: ${{ inputs.runner }}
