@@ -231,7 +231,7 @@ jobs:
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
       - name: Copy deployment for Next.js
-        if: ${ env.ssr == 'true' }}
+        if: ${{ env.ssr == 'true' }}
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
@@ -243,7 +243,7 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Deploy the release
-        if: ${ env.ssr == 'true' }}
+        if: ${{ env.ssr == 'true' }}
         uses: appleboy/ssh-action@v0.1.6
         id: deploy-release
         with:
@@ -277,7 +277,7 @@ jobs:
             passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
-        if: ${ env.ssr == 'true' }}
+        if: ${{ env.ssr == 'true' }}
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ inputs.deploy_host }}
@@ -288,7 +288,7 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
 
       - name: Configure AWS Credentials
-        if: ${ env.ssr == 'false' }}
+        if: ${{ env.ssr == 'false' }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -296,7 +296,7 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Deploy static site to S3 bucket
-        if: ${ env.ssr == 'false' }}
+        if: ${{ env.ssr == 'false' }}
         run: aws s3 sync ${{ env.dist_path }} s3://${{ secrets.BUCKET_NAME }} --delete
 
       # To here
