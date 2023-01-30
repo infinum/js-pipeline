@@ -24,35 +24,6 @@ on:
         required: true
         type: string
 
-      # React, Next, Angular or Node
-      # if not defined:
-      # * use angular if angular.json is present
-      # * use next if next.config.js is present
-      # * otherwise use react
-      framework:
-        required: false
-        type: string
-
-      # Server-side rendering or client-side rendering
-      # if not defined:
-      # * use ssr if next.config.js is present
-      # * otherwise use csr
-      ssr:
-        required: false
-        type: boolean
-        default: false
-
-      # Should npm or yarn be used to install dependencies?
-      # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
-      package_manager:
-        required: false
-        type: string
-
-      # should generally be left undefined - it will default to the `.node-version` file in the root of the project
-      node_version:
-        required: false
-        type: string
-
       # Slack channel name where the notifications will be sent
       slack_notification_channel:
         required: false
@@ -81,58 +52,15 @@ on:
         required: true
         type: string
 
-      # Secrets vault to be used
-      secrets:
-        required: false
-        type: string
-
-      newrelic:
-        required: false
-        type: boolean
-
-      deploy_host:
-        required: false
-        type: string
-
-      deploy_to:
-        required: false
-        type: string
-
-      deploy_user:
-        required: false
-        type: string
-
-      deploy_port:
-        required: false
-        type: number
-
-      project_icon:
-        required: false
-        type: string
-        default: 'https://i.imgur.com/v6bLyxF.png'
-
-      dist_path:
-        required: false
-        type: string
-
     secrets:
-      VAULT_ADDR:
-        required: false
-      VAULT_AUTH_METHOD:
-        required: false
-      VAULT_AUTH_ROLE_ID:
-        required: false
-      VAULT_AUTH_SECRET_ID:
-        required: false
       SLACK_BOT_TOKEN:
         required: false
-      SSH_PRIVATE_KEY:
-        required: false
-      # Check with Maks if this inputs are needed or maybe it the action will have access to those secrets on own
       AWS_ACCESS_KEY_ID:
         required: false
       AWS_SECRET_ACCESS_KEY:
         required: false
+
+    variables:
       AWS_REGION:
         required: false
       BUCKET_NAME:
@@ -170,136 +98,29 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
   deploy:
     needs: [setup]
-    name: 'Deploy the application'
+    name: 'Deploy the application to S3'
     if: ${{ contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
     steps:
-      - name: Git checkout
-        uses: actions/checkout@v3
-      - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
-        with:
-          runner: ${{ inputs.runner }}
-          framework: ${{ inputs.framework }}
-          ssr: ${{ inputs.ssr }}
-          package_manager: ${{ inputs.package_manager }}
-          newrelic: ${{ inputs.newrelic }}
-
-      - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@add-angular-support
-        with:
-          runner: ${{ inputs.runner }}
-          framework: ${{ inputs.framework }}
-          ssr: ${{ inputs.ssr }}
-          package_manager: ${{ inputs.package_manager }}
-          node_version: ${{ inputs.node_version }}
-          newrelic: ${{ inputs.newrelic }}
-          environment: ${{ inputs.environment }}
-          secrets: ${{ inputs.secrets }}
-          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          dist_path: ${{ inputs.dist_path }}
-          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-          VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
-          VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
-
-      - name: Prepare Next.js standalone
-        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
-        run: |
-          mv ./.next/standalone/server.js ./.next/standalone/index.js
-          cp -r ./public .next/standalone
-          cp -r ./.next/static ./.next/standalone/.next
-          cp ./next.config.js ./.next/standalone/next.config.js
-          cp ./.node-version  ./.next/standalone/.node-version
-          if ${{ env.newrelic == 'true' }}; then
-            cp ./newrelic.js ./.next/standalone/newrelic.js
-          fi
-
       - id: commit
         uses: pr-mpt/actions-commit-hash@v2
 
-      # Change from here
-      - name: Create release folder
-        if: ${{ env.ssr == 'true' }}
-        uses: appleboy/ssh-action@v0.1.6
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
         with:
-          host: ${{ inputs.deploy_host }}
-          username: ${{ inputs.deploy_user }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ inputs.deploy_port }}
-          script: |
-            mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
-
-      - name: Copy deployment for Next.js
-        if: ${{ env.ssr == 'true' }}
-        uses: burnett01/rsync-deployments@5.2.1
-        with:
-          switches: -avzr
-          path: ${{ env.dist_path }}
-          remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
-          remote_host: ${{ inputs.deploy_host }}
-          remote_port: ${{ inputs.deploy_port }}
-          remote_user: ${{ inputs.deploy_user }}
-          remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy the release
-        if: ${{ env.ssr == 'true' }}
-        uses: appleboy/ssh-action@v0.1.6
-        id: deploy-release
-        with:
-          host: ${{ inputs.deploy_host }}
-          username: ${{ inputs.deploy_user }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ inputs.deploy_port }}
-          script: |
-            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
-            ln -nfs releases/${{ steps.commit.outputs.short }}/ current
-            cd current
-            if ${{ env.newrelic }}
-            then
-              npm install @newrelic/next
-              NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
-            else
-              passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
-            fi
-
-      - name: Clean up failed release
-        uses: appleboy/ssh-action@v0.1.6
-        if: ${{ failure() && env.ssr == 'true' }}
-        with:
-          host: ${{ inputs.deploy_host }}
-          username: ${{ inputs.deploy_user }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ inputs.deploy_port }}
-          script: |
-            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
-            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
-            passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
-
-      - name: Clean up release folder
-        if: ${{ env.ssr == 'true' }}
-        uses: appleboy/ssh-action@v0.1.6
-        with:
-          host: ${{ inputs.deploy_host }}
-          username: ${{ inputs.deploy_user }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ inputs.deploy_port }}
-          script: |
-            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+          name: public
+          path: public
 
       - name: Configure AWS Credentials
-        if: ${{ env.ssr == 'false' }}
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Deploy static site to S3 bucket
-        if: ${{ env.ssr == 'false' }}
-        run: aws s3 sync ${{ env.dist_path }} s3://${{ secrets.BUCKET_NAME }} --delete
-
-      # To here
+        id: deploy-release
+        run: aws s3 sync public/ s3://${{ vars.BUCKET_NAME }} --delete
 
       - name: Notify on Slack
         env:
