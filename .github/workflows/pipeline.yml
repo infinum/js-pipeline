@@ -360,21 +360,7 @@ jobs:
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
-      # Test if this is needed as detect-env is now handling the path
-      # - name: Copy deployment for Next.js
-      #   if: ${{ env.framework == 'next' && env.ssr == 'true' }}
-      #   uses: burnett01/rsync-deployments@5.2.1
-      #   with:
-      #     switches: -avzr
-      #     path: ${{ env.dist_path }}
-      #     remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
-      #     remote_host: ${{ inputs.deploy_host }}
-      #     remote_port: ${{ inputs.deploy_port }}
-      #     remote_user: ${{ inputs.deploy_user }}
-      #     remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Copy deployment for other
-        # if: ${{ env.framework != 'next' || env.ssr == 'false' }}
+      - name: Copy deployment
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
@@ -384,17 +370,6 @@ jobs:
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      # Test if this is needed, it just cd-s
-      # - name: Deploy to ${{ inputs.environment }}
-      #   uses: appleboy/ssh-action@v0.1.6
-      #   with:
-      #     host: ${{ inputs.deploy_host }}
-      #     username: ${{ inputs.deploy_user }}
-      #     key: ${{ secrets.SSH_PRIVATE_KEY }}
-      #     port: ${{ inputs.deploy_port }}
-      #     script: |
-      #       cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
       - name: Deploy the release
         uses: appleboy/ssh-action@v0.1.6
