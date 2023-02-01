@@ -85,6 +85,10 @@ on:
         required: false
         type: boolean
 
+      workflow:
+        required: false
+        type: string
+
       deploy_host:
         required: false
         type: string
@@ -205,3 +209,103 @@ jobs:
           name: public
           path: ${{ inputs.dist_path }}
           retention-days: 1
+
+  lint:
+    needs: [setup]
+    name: 'Lint the code'
+    if: ${{ contains(inputs.ci_steps, 'lint') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Run lint
+        shell: bash
+        id: 'lint'
+        run: 'npm run lint'
+  test:
+    needs: [setup]
+    name: 'Run tests'
+    if: ${{ contains(inputs.ci_steps, 'test') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Run test
+        shell: bash
+        id: 'test'
+        run: 'npm run test'
+  jest:
+    needs: [setup]
+    name: 'Run tests with coverage'
+    if: ${{ contains(inputs.ci_steps, 'jest') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Test Coverage
+        id: testCoverage
+        uses: anuraag016/Jest-Coverage-Diff@master
+        with:
+          fullCoverageDiff: false
+          runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
+          delta: 0.5
+  analyze:
+    needs: [build]
+    name: 'Analyze the Next.js bundle size'
+    if: ${{ contains(inputs.ci_steps, 'analyze') }}
+    runs-on: ${{ inputs.runner }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Analyze the bundle'
+        uses: infinum/js-pipeline/.github/actions/analyze@add-angular-support
+        with:
+          workflow: ${{ inputs.workflow }}
