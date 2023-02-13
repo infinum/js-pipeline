@@ -143,7 +143,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -152,7 +152,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
           dist_path: ${{ inputs.dist_path }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -168,7 +168,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/build@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -210,7 +210,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -218,7 +218,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -238,7 +238,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -246,7 +246,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -266,7 +266,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -274,7 +274,7 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -297,7 +297,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/analyze@v1
         with:
           workflow: ${{ inputs.workflow }}
   deploy:
@@ -309,7 +309,7 @@ jobs:
       - name: Git checkout
         uses: actions/checkout@v3
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -318,7 +318,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
 
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@add-angular-support
+        uses: infinum/js-pipeline/.github/actions/build@v1
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
