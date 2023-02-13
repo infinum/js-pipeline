@@ -38,6 +38,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | `node_version` | Node.js version to use. | all | false | The one defined in `.node-version` |
 | `framework` | Project type - supported values are `angular`, `react`, `next` and `node` | all | false | `angular` if `angular.json` present in root, `next` if `next.config.js` present in root, otherwise `react` |
 | `deploy_to` | Path where the app is deployed on the server | `deploy` | false | `/home/{{deploy_user}}/www/{{deploy_host}}` |
+| `dist_path` | Path to build folder | `build, deploy` | false | `./dist/*` |
 | `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
 | `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
 | `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |

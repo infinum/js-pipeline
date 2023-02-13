@@ -44,6 +44,10 @@ inputs:
     required: false
     description: 'Additional environment variables set in the workflow (in the JSON format)'
 
+  dist_path:
+    required: false
+    description: 'Path to dist folder. If not defined, a path based on framework will be used.'
+
   # vault:
   VAULT_ADDR:
     required: false
@@ -77,15 +81,16 @@ runs:
     - name: Git checkout
       uses: actions/checkout@v3
     - name: Detect env
-      uses: infinum/js-pipeline/.github/actions/detect-env@master
+      uses: infinum/js-pipeline/.github/actions/detect-env@v1
       with:
         runner: ${{ inputs.runner }}
         framework: ${{ inputs.framework }}
         ssr: ${{ inputs.ssr }}
         package_manager: ${{ inputs.package_manager }}
         newrelic: ${{ inputs.newrelic }}
+        dist_path: ${{ inputs.dist_path }}
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@master
+      uses: infinum/js-pipeline/.github/actions/bootstrap@v1
       with:
         runner: ${{ inputs.runner }}
         package_manager: ${{ env.package_manager }}
