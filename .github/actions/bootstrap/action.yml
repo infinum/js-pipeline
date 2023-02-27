@@ -78,7 +78,7 @@ runs:
     - name: Install JS packages
       shell: bash
       run: |
-        if [ "${{ inputs.package_manager }}" = "yarn" ]; then
+        if [ "${{ inputs.package_manager }}" == "yarn" ]; then
           yarn install --frozen-lockfile
         else
           npm ci
