@@ -83,7 +83,7 @@ runs:
         if "${{ inputs.dist_path != '' }}"; then
           echo "dist_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
           echo "artifact_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
-        elif [ "${{ env.framework }}" == "next" && ${{ env.ssr }} == true ]; then
+        elif [[ "${{ env.framework }}" == "next" && ${{ env.ssr }} == true ]]; then
           echo "dist_path=.next/standalone/" >> $GITHUB_ENV
           echo "artifact_path=./next/**" >> $GITHUB_ENV
         elif [ ${{ env.framework }}  == "node" ]; then
