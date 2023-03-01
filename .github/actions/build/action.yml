@@ -67,7 +67,7 @@ runs:
   steps:
     - name: Set up additional environment variables
       env:
-        ADDITIONAL_VARIABLES: ${{ inputs.env_vars }}
+        ADDITIONAL_VARIABLES: ${{ inputs.env_vars }}  # Why is this used? On line 99 env_vars is used.
       if: ${{ env.ADDITIONAL_VARIABLES }}
       shell: bash
       run: >
@@ -80,22 +80,13 @@ runs:
         fi
     - name: Git checkout
       uses: actions/checkout@v3
-    - name: Detect env
-      uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
-      with:
-        runner: ${{ inputs.runner }}
-        framework: ${{ inputs.framework }}
-        ssr: ${{ inputs.ssr }}
-        package_manager: ${{ inputs.package_manager }}
-        newrelic: ${{ inputs.newrelic }}
-        dist_path: ${{ inputs.dist_path }}
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+      uses: infinum/js-pipeline/.github/actions/bootstrap@v2
       with:
         runner: ${{ inputs.runner }}
-        package_manager: ${{ env.package_manager }}
+        package_manager: ${{ inputs.package_manager }}
         node_version: ${{ inputs.node_version }}
-        framework: ${{ env.framework }}
+        framework: ${{ inputs.framework }}
         env_vars: ${{ inputs.env_vars }}
     - name: Debug
       if: ${{ inputs.secrets }}
@@ -116,7 +107,7 @@ runs:
       if: ${{env.app_secrets}}
       shell: bash
       run: |
-        echo "::add-mask::${{ env.app_secrets }}" > .env
+        echo "${{ env.app_secrets }}" > .env
         echo "Secrets have been added to the .env file"
     - name: Run build
       shell: bash

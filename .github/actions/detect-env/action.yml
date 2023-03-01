@@ -37,7 +37,7 @@ runs:
     - name: Detect framework
       shell: bash
       run: |
-        if ${{ inputs.framework || false }}; then
+        if ${{ inputs.framework != '' }}; then
           echo "framework=${{ inputs.framework }}" >> $GITHUB_ENV
         elif [ -f angular.json ]; then
           echo "framework=angular" >> $GITHUB_ENV
@@ -50,7 +50,7 @@ runs:
     - name: Detect SSR
       shell: bash
       run: |
-        if ${{ inputs.ssr || false }}; then
+        if ${{ inputs.ssr != '' }}; then
           echo "ssr=${{ inputs.ssr }}" >> $GITHUB_ENV
         elif [ -f next.config.js ]; then
           echo "ssr=true" >> $GITHUB_ENV
@@ -60,7 +60,7 @@ runs:
     - name: Detect package manager
       shell: bash
       run: |
-        if ${{ inputs.package_manager || false }}; then
+        if ${{ inputs.package_manager != '' }}; then
           echo "package_manager=${{ inputs.package_manager }}" >> $GITHUB_ENV
         elif [ -f package-lock.json ]; then
           echo "package_manager=npm" >> $GITHUB_ENV
@@ -70,7 +70,7 @@ runs:
     - name: Detect tooling
       shell: bash
       run: |
-        if ${{ inputs.newrelic || false }}; then
+        if ${{ inputs.newrelic != '' }}; then
           echo "newrelic=${{ inputs.newrelic }}" >> $GITHUB_ENV
         elif [ -f newrelic.js ]; then
           echo "newrelic=true" >> $GITHUB_ENV
@@ -82,16 +82,12 @@ runs:
       run: |
         if "${{ inputs.dist_path != '' }}"; then
           echo "dist_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
-          echo "artifact_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
         elif [ "${{ env.framework }}" == "next" ]; then
           echo "dist_path=.next/standalone/" >> $GITHUB_ENV
-          echo "artifact_path=./next/**" >> $GITHUB_ENV
         elif [ ${{ env.framework }}  == "node" ]; then
           echo "dist_path=./" >> $GITHUB_ENV
-          echo "artifact_path=./" >> $GITHUB_ENV
         else
           echo "dist_path=./dist/*" >> $GITHUB_ENV
-          echo "artifact_path=./dist/*" >> $GITHUB_ENV
         fi
     - name: Summary
       shell: bash
@@ -101,4 +97,3 @@ runs:
         echo "Package manager: ${{ env.package_manager }}"
         echo "New Relic: ${{ env.newrelic }}"
         echo "dist_path: ${{ env.dist_path }}"
-        echo "artifact_path": ${{ env.artifact_path }}

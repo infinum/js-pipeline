@@ -30,7 +30,7 @@ The logic is as follows:
 
 ```bash
   # Framework
-  if ${{ inputs.framework || false }}; then
+  if ${{ inputs.framework != '' }}; then
     framework=${{ inputs.framework }}
   elif [ -f angular.json ]; then
     framework=angular
@@ -42,7 +42,7 @@ The logic is as follows:
   fi
 
   # SSR
-  if ${{ inputs.ssr || false }}; then
+  if ${{ inputs.ssr != '' }}; then
     ssr=${{ inputs.ssr }}
   elif [ -f next.config.js ]; then
     ssr=true
@@ -51,7 +51,7 @@ The logic is as follows:
   fi
 
   # Package manager
-  if ${{ inputs.package_manager || false }}; then
+  if ${{ inputs.package_manager != '' }}; then
     package_manager=${{ inputs.package_manager }}
   elif [ -f package-lock.json ]; then
     package_manager=npm
@@ -60,7 +60,7 @@ The logic is as follows:
   fi
 
   # Tooling
-  if ${{ inputs.newrelic || false }}; then
+  if ${{ inputs.newrelic != '' }}; then
     newrelic=${{ inputs.newrelic }}
   elif [ -f newrelic.js ]; then
     newrelic=true
@@ -83,7 +83,7 @@ The reasoning behind why Next.js is a special case of React:
 
 ## TODO
 
-* [ ] Angular support
+* [ ] Angular support <!-- Check if this can be removed -->
 * [ ] CSR React/Next support
 * [ ] Add Slack notifications for jobs other than deploy
 * [ ] Handle situation where SSR is passed as `false`
