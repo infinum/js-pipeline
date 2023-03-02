@@ -137,6 +137,19 @@ runs:
         if ${{ inputs.newrelic }}; then
           cp ./newrelic.js ./.next/standalone/newrelic.js
         fi
+    - name: Check file existence
+      id: check_node_version
+      uses: andstor/file-existence-action@v2
+      with:
+        files: ".node-version"
+    - name: Prepare other node builds
+      if: steps.check_node_version.outputs.files_exists
+      shell: bash
+      run: |
+        cp ./.node-version  ./${{ inputs.dist_path }}/.node-version
+        if ${{ inputs.newrelic }}; then
+          cp ./newrelic.js ./${{ inputs.dist_path }}/newrelic.js
+        fi
     - id: commit
       uses: pr-mpt/actions-commit-hash@v2
     - name: Cache the build
