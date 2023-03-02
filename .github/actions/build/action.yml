@@ -84,11 +84,6 @@ runs:
         fi
     - name: Git checkout
       uses: actions/checkout@v3
-    - name: Override env.json
-      if: ${{ inputs.override_env_json != '' }}
-      run: mv ${{ inputs.override_env_json }}.${{ inputs.environment }} ${{ inputs.override_env_json }}
-      shell: bash
-  
     - name: Detect env
       uses: infinum/js-pipeline/.github/actions/detect-env@v1
       with:
@@ -127,6 +122,10 @@ runs:
       run: |
         echo "${{ env.app_secrets }}" > .env
         echo "Secrets have been added to the .env file"
+    - name: Override env.json
+      if: ${{ inputs.override_env_json != '' }}
+      run: mv ${{ inputs.override_env_json }}.${{ inputs.environment }} ${{ inputs.override_env_json }}
+      shell: bash
     - name: Run build
       shell: bash
       id: 'build'
