@@ -114,6 +114,11 @@ on:
         required: false
         type: string
 
+      override_env_json:
+        required: false
+        type: string
+        description: 'Contents of the env.json file to override with'
+
     secrets:
       VAULT_ADDR:
         required: false
