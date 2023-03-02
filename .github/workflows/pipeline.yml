@@ -159,16 +159,21 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          # Output the env variables from detect-env
   build:
     needs: [setup]
     name: 'Build'
     if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
+    outputs:
+      output_framework: ${{ steps.build.outputs.framework }}
+      output_ssr: ${{ steps.build.outputs.ssr }}
+      output_package_manager: ${{ steps.build.outputs.package_manager }}
+      output_newrelic: ${{ steps.build.outputs.newrelic }}
+      output_dist_path: ${{ steps.build.outputs.dist_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: Build # Initialize the env variables from output of setup job - change the env. to job.id.output...
+      - name: Build
         uses: infinum/js-pipeline/.github/actions/build@v2
         with:
           runner: ${{ inputs.runner }}
@@ -185,9 +190,16 @@ jobs:
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+      - id: build
+        run: |
+          echo "framework=${{ env.framework }}" >> "$GITHUB_OUTPUT"
+          echo "ssr=${{ env.ssr }}" >> "$GITHUB_OUTPUT"
+          echo "package_manager=${{ env.package_manager }}" >> "$GITHUB_OUTPUT"
+          echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
+          echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
       - name: Prepare artifact for Next.js
         shell: bash
-        if: ${{ env.framework == 'next' }} # Add && contains(inputs.ci_steps, 'analyze') || artifact true - check multiple and + or rules  || env.ssr == 'false'
+        if: ${{ env.framework == 'next' }} && ( contains(inputs.ci_steps, 'analyze') || inputs.use_artifact )
         id: 'prepare-artifact'
         run: 'rm -rf .next/cache'
       - name: Prepare Next.js standalone
@@ -202,7 +214,7 @@ jobs:
             cp ./newrelic.js ./.next/standalone/newrelic.js
           fi
       - name: Upload artifacts for Next.js
-        if: ${{ env.framework == 'next' }} # Same as above comment
+        if: ${{ env.framework == 'next' }} && ( contains(inputs.ci_steps, 'analyze') || inputs.use_artifact )
         uses: actions/upload-artifact@v3
         with:
           name: 'build'
@@ -229,7 +241,7 @@ jobs:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.framework }}
+          framework: ${{ env.output_framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Run lint
         shell: bash
@@ -240,16 +252,22 @@ jobs:
     name: 'Run tests'
     if: ${{ contains(inputs.ci_steps, 'test') }}
     runs-on: ${{ inputs.runner }}
+    env:
+      output_framework: ${{ needs.build.outputs.output_framework }}
+      output_ssr: ${{ needs.build.outputs.output_ssr }}
+      output_package_manager: ${{ needs.build.outputs.output_package_manager }}
+      output_newrelic: ${{ needs.build.outputs.output_newrelic }}
+      output_dist_path: ${{ needs.build.outputs.output_dist_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment' # Initialize the env variables from output of setup job - change the env. to job.id.output...
+      - name: 'Bootstrap up the Node.js environment'
         uses: infinum/js-pipeline/.github/actions/bootstrap@v2
         with:
           runner: ${{ inputs.runner }}
-          package_manager: ${{ env.package_manager }}
+          package_manager: ${{ env.output_package_manager }}
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.framework }}
+          framework: ${{ env.output_framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Run test
         shell: bash
@@ -263,13 +281,13 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: 'Bootstrap up the Node.js environment' # Initialize the env variables from output of setup job - change the env. to job.id.output...
+      - name: 'Bootstrap up the Node.js environment'
         uses: infinum/js-pipeline/.github/actions/bootstrap@v2
         with:
           runner: ${{ inputs.runner }}
-          package_manager: ${{ env.package_manager }}
+          package_manager: ${{ env.output_package_manager }}
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.framework }}
+          framework: ${{ env.output_framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Test Coverage
         id: testCoverage
@@ -297,7 +315,7 @@ jobs:
     runs-on: ${{ inputs.runner }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3 # Initialize the env variables from output of setup job - change the env. to job.id.output...
+        uses: actions/checkout@v3
       - name: Build # Set if artifact false / else use the artifact - also when build is reworked, remove the next step
         uses: infinum/js-pipeline/.github/actions/build@v2
         with:
@@ -317,14 +335,14 @@ jobs:
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
 
       - name: Prepare Next.js standalone # Remove - mentioned in previous step
-        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
+        if: ${{ env.output_framework == 'next' && env.output_ssr == 'true' }}
         run: |
           mv ./.next/standalone/server.js ./.next/standalone/index.js
           cp -r ./public .next/standalone
           cp -r ./.next/static ./.next/standalone/.next
           cp ./next.config.js ./.next/standalone/next.config.js
           cp ./.node-version  ./.next/standalone/.node-version
-          if ${{ env.newrelic == 'true' }}; then
+          if ${{ env.output_newrelic == 'true' }}; then
             cp ./newrelic.js ./.next/standalone/newrelic.js
           fi
 
@@ -342,11 +360,11 @@ jobs:
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
       - name: Copy deployment for Next.js
-        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
+        if: ${{ env.output_framework == 'next' && env.output_ssr == 'true' }}
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: ${{ env.dist_path }}
+          path: ${{ env.output_dist_path }}
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -354,11 +372,11 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Copy deployment for other
-        if: ${{ env.framework != 'next' || env.ssr == 'false' }}
+        if: ${{ env.output_framework != 'next' || env.output_ssr == 'false' }}
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: ${{ env.dist_path }}
+          path: ${{ env.output_dist_path }}
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -387,7 +405,7 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if ${{ env.newrelic }}
+            if ${{ env.output_newrelic }}
             then
               npm install @newrelic/next
               NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
