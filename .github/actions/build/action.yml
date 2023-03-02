@@ -48,6 +48,10 @@ inputs:
     required: false
     description: 'Path to dist folder. If not defined, a path based on framework will be used.'
 
+  override_env_json:
+    required: false
+    description: 'Contents of the env.json file to override with'
+
   # vault:
   VAULT_ADDR:
     required: false
@@ -80,8 +84,15 @@ runs:
         fi
     - name: Git checkout
       uses: actions/checkout@v3
+    - name: Override env.json
+      if: ${{ inputs.override_env_json }}
+      uses: "DamianReeves/write-file-action@master"
+      with:
+        path: ./src/assets/env.json
+        write-mode: overwrite
+        contents: ${{ inputs.override_env_json }}
     - name: Detect env
-      uses: infinum/js-pipeline/.github/actions/detect-env@add-angular-support
+      uses: infinum/js-pipeline/.github/actions/detect-env@v1
       with:
         runner: ${{ inputs.runner }}
         framework: ${{ inputs.framework }}
@@ -90,7 +101,7 @@ runs:
         newrelic: ${{ inputs.newrelic }}
         dist_path: ${{ inputs.dist_path }}
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@add-angular-support
+      uses: infinum/js-pipeline/.github/actions/bootstrap@v1
       with:
         runner: ${{ inputs.runner }}
         package_manager: ${{ env.package_manager }}
@@ -116,7 +127,7 @@ runs:
       if: ${{env.app_secrets}}
       shell: bash
       run: |
-        echo "::add-mask::${{ env.app_secrets }}" > .env
+        echo "${{ env.app_secrets }}" > .env
         echo "Secrets have been added to the .env file"
     - name: Run build
       shell: bash

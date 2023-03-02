@@ -174,7 +174,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
 
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@v1
+        uses: infinum/js-pipeline/.github/actions/build@v2
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -186,6 +186,7 @@ jobs:
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ inputs.dist_path }}
+          override_env_json: ${{ override_env_json }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
