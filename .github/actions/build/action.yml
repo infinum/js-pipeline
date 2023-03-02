@@ -85,7 +85,7 @@ runs:
     - name: Git checkout
       uses: actions/checkout@v3
     - name: Override env.json
-      if: ${{ inputs.override_env_json }}
+      if: ${{ inputs.override_env_json != "" }}
       uses: "DamianReeves/write-file-action@master"
       with:
         path: ./src/assets/env.json
