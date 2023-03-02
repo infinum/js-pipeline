@@ -32,6 +32,14 @@ inputs:
     required: false
     description: 'Should New Relic be used? If not defined, use New Relic if `newrelic.js` is present, otherwise do not use New Relic'
 
+  use_artifact:
+    required: false
+    description: 'Defines whether to cache or artifact the build'
+
+  ci_steps:
+    required: false
+    description: 'Defines whether to artifact the build'
+
   secrets:
     required: false
     description: 'Secrets vault to be used'
@@ -47,6 +55,10 @@ inputs:
   dist_path:
     required: false
     description: 'Path to dist folder. If not defined, a path based on framework will be used.'
+  
+  artifact_path:
+    required: false
+    description: 'Folder that gets uploaded to artifact.'
 
   # vault:
   VAULT_ADDR:
@@ -113,3 +125,50 @@ runs:
       shell: bash
       id: 'build'
       run: 'NEXT_TELEMETRY_DISABLED=1 npm run build'
+    - name: Prepare Next.js standalone
+      if: ${{ inputs.framework == 'next' && inputs.ssr }}
+      shell: bash
+      run: |
+        mv ./.next/standalone/server.js ./.next/standalone/index.js
+        cp -r ./public .next/standalone
+        cp -r ./.next/static ./.next/standalone/.next
+        cp ./next.config.js ./.next/standalone/next.config.js
+        cp ./.node-version  ./.next/standalone/.node-version
+        if ${{ inputs.newrelic }}; then
+          cp ./newrelic.js ./.next/standalone/newrelic.js
+        fi
+    - id: commit
+      uses: pr-mpt/actions-commit-hash@v2
+    - name: Cache the build
+      id: cache-build
+      if: ${{ !inputs.use_artifact && contains(inputs.ci_steps, 'deploy') }}
+      uses: actions/cache@v3
+      with:
+        path: ${{ inputs.dist_path }}
+        key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+    - name: Prepare artifact for Next.js
+      shell: bash
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy')) || inputs.use_artifact }}
+      id: 'prepare-artifact'
+      run: 'rm -rf .next/cache'
+    - name: Upload artifacts for Next.js - Artifact Path
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'build-${{ steps.commit.outputs.short }}-artifact'
+        path: ${{ inputs.artifact_path }}
+        retention-days: 30
+    - name: Upload artifacts for Next.js - Dist Path
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact ) }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
+        path: ${{ inputs.dist_path }}
+        retention-days: 30
+    - name: Generic upload artifacts
+      if: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact }}
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'build-${{ steps.commit.outputs.short }}-artifact'
+        path: ${{ inputs.dist_path }}
+        retention-days: 1

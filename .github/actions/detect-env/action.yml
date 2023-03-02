@@ -82,12 +82,16 @@ runs:
       run: |
         if "${{ inputs.dist_path != '' }}"; then
           echo "dist_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
+          echo "artifact_path=${{ inputs.dist_path }}" >> $GITHUB_ENV
         elif [ "${{ env.framework }}" == "next" ]; then
           echo "dist_path=.next/standalone/" >> $GITHUB_ENV
+          echo "artifact_path=./next/**" >> $GITHUB_ENV
         elif [ ${{ env.framework }}  == "node" ]; then
           echo "dist_path=./" >> $GITHUB_ENV
+          echo "artifact_path=./" >> $GITHUB_ENV
         else
           echo "dist_path=./dist/*" >> $GITHUB_ENV
+          echo "artifact_path=./dist/*" >> $GITHUB_ENV
         fi
     - name: Summary
       shell: bash
@@ -97,3 +101,4 @@ runs:
         echo "Package manager: ${{ env.package_manager }}"
         echo "New Relic: ${{ env.newrelic }}"
         echo "dist_path: ${{ env.dist_path }}"
+        echo "artifact_path": ${{ env.artifact_path }}

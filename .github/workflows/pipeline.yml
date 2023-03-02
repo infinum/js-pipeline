@@ -42,6 +42,13 @@ on:
         required: false
         type: string
 
+      # Define is build should upload an artifact
+      # If left false, cache will be used for deploy
+      use_artifact:
+        required: false
+        type: boolean
+        default: false
+
       # should generally be left undefined - it will default to the `.node-version` file in the root of the project
       node_version:
         required: false
@@ -135,10 +142,16 @@ on:
         required: false
 
 jobs:
-  # Not sure if this is needed or will it be taken from previous workflow?
   setup:
     name: 'Environment setup'
     runs-on: ${{ inputs.runner }}
+    outputs:
+      output_framework: ${{ steps.export_variables.outputs.framework }}
+      output_ssr: ${{ steps.export_variables.outputs.ssr }}
+      output_package_manager: ${{ steps.export_variables.outputs.package_manager }}
+      output_newrelic: ${{ steps.export_variables.outputs.newrelic }}
+      output_dist_path: ${{ steps.export_variables.outputs.dist_path }}
+      output_artifact_path: ${{ steps.export_variables.outputs.artifact_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -159,17 +172,26 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - id: export_variables
+        run: |
+          echo "framework=${{ env.framework }}" >> "$GITHUB_OUTPUT"
+          echo "ssr=${{ env.ssr }}" >> "$GITHUB_OUTPUT"
+          echo "package_manager=${{ env.package_manager }}" >> "$GITHUB_OUTPUT"
+          echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
+          echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
+          echo "artifact_path=${{ env.artifact_path }}" >> "$GITHUB_OUTPUT"
   build:
     needs: [setup]
     name: 'Build'
-    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') }}
+    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
-    outputs:
-      output_framework: ${{ steps.build.outputs.framework }}
-      output_ssr: ${{ steps.build.outputs.ssr }}
-      output_package_manager: ${{ steps.build.outputs.package_manager }}
-      output_newrelic: ${{ steps.build.outputs.newrelic }}
-      output_dist_path: ${{ steps.build.outputs.dist_path }}
+    env:
+      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
+      OUTPUT_SSR: ${{ needs.setup.outputs.output_ssr }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
+      OUTPUT_NEWRELIC: ${{ needs.setup.outputs.output_newrelic }}
+      OUTPUT_DIST_PATH: ${{ needs.setup.outputs.output_dist_path }}
+      OUTPUT_ARTIFACT_PATH: ${{ needs.setup.outputs.output_artifact_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -177,67 +199,30 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/build@v2
         with:
           runner: ${{ inputs.runner }}
-          framework: ${{ inputs.framework }}
-          ssr: ${{ inputs.ssr }}
-          package_manager: ${{ inputs.package_manager }}
+          framework: $OUTPUT_FRAMEWORK
+          ssr: $OUTPUT_SSR
+          package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
-          newrelic: ${{ inputs.newrelic }}
+          newrelic: $OUTPUT_NEWRELIC
           environment: ${{ inputs.environment }}
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          dist_path: ${{ inputs.dist_path }}
+          dist_path: $OUTPUT_DIST_PATH
+          artifact_path: $OUTPUT_ARTIFACT_PATH
+          use_artifact: ${{ inputs.use_artifact }}
+          ci_steps: ${{ inputs.ci_steps }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-      - id: build
-        run: |
-          echo "framework=${{ env.framework }}" >> "$GITHUB_OUTPUT"
-          echo "ssr=${{ env.ssr }}" >> "$GITHUB_OUTPUT"
-          echo "package_manager=${{ env.package_manager }}" >> "$GITHUB_OUTPUT"
-          echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
-          echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
-      - name: Prepare artifact for Next.js
-        shell: bash
-        if: ${{ env.framework == 'next' }} && ( contains(inputs.ci_steps, 'analyze') || inputs.use_artifact )
-        id: 'prepare-artifact'
-        run: 'rm -rf .next/cache'
-      - name: Prepare Next.js standalone
-        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
-        run: |
-          mv ./.next/standalone/server.js ./.next/standalone/index.js
-          cp -r ./public .next/standalone
-          cp -r ./.next/static ./.next/standalone/.next
-          cp ./next.config.js ./.next/standalone/next.config.js
-          cp ./.node-version  ./.next/standalone/.node-version
-          if ${{ env.newrelic == 'true' }}; then
-            cp ./newrelic.js ./.next/standalone/newrelic.js
-          fi
-      - name: Upload artifacts for Next.js
-        if: ${{ env.framework == 'next' }} && ( contains(inputs.ci_steps, 'analyze') || inputs.use_artifact )
-        uses: actions/upload-artifact@v3
-        with:
-          name: 'build'
-          path: ${{ env.dist_path }}
-          retention-days: 30
-      - name: Generic upload artifacts
-        if: ${{ env.framework != 'next' || env.ssr == 'false' }} # Should this be &&
-        uses: actions/upload-artifact@v3
-        with:
-          name: 'build'
-          path: ${{ env.dist_path }}
-          retention-days: 1
   lint:
     needs: [setup]
     name: 'Lint the code'
     if: ${{ contains(inputs.ci_steps, 'lint') }}
     runs-on: ${{ inputs.runner }}
     env:
-      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
-#      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
-      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
-#      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
-#      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
+      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -259,11 +244,8 @@ jobs:
     if: ${{ contains(inputs.ci_steps, 'test') }}
     runs-on: ${{ inputs.runner }}
     env:
-      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
-#      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
-      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
-#      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
-#      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
+      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -285,11 +267,8 @@ jobs:
     if: ${{ contains(inputs.ci_steps, 'jest') }}
     runs-on: ${{ inputs.runner }}
     env:
-      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
-#      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
-      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
-#      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
-#      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
+      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -326,47 +305,32 @@ jobs:
     if: ${{ contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
     env:
-      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
-      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
-#      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
-      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
-      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
+      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
+      OUTPUT_SSR: ${{ needs.setup.outputs.output_ssr }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
+      OUTPUT_NEWRELIC: ${{ needs.setup.outputs.output_newrelic }}
+      OUTPUT_DIST_PATH: ${{ needs.setup.outputs.output_dist_path }}
+      OUTPUT_ARTIFACT_PATH: ${{ needs.setup.outputs.output_artifact_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
-      - name: Build # Set if artifact false / else use the artifact - also when build is reworked, remove the next step
-        uses: infinum/js-pipeline/.github/actions/build@v2
-        with:
-          runner: ${{ inputs.runner }}
-          framework: ${{ inputs.framework }}
-          ssr: ${{ inputs.ssr }}
-          package_manager: ${{ inputs.package_manager }}
-          node_version: ${{ inputs.node_version }}
-          newrelic: ${{ inputs.newrelic }}
-          environment: ${{ inputs.environment }}
-          secrets: ${{ inputs.secrets }}
-          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          dist_path: ${{ inputs.dist_path }}
-          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
-          VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
-          VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
-
-      - name: Prepare Next.js standalone # Remove - mentioned in previous step
-        if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
-        run: |
-          mv ./.next/standalone/server.js ./.next/standalone/index.js
-          cp -r ./public .next/standalone
-          cp -r ./.next/static ./.next/standalone/.next
-          cp ./next.config.js ./.next/standalone/next.config.js
-          cp ./.node-version  ./.next/standalone/.node-version
-          if $OUTPUT_NEWRELIC; then
-            cp ./newrelic.js ./.next/standalone/newrelic.js
-          fi
-
       - id: commit
         uses: pr-mpt/actions-commit-hash@v2
-
+      # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
+      - name: Restore the build from cache
+        uses: actions/cache/restore@v3
+        if: ${{ !inputs.use_artifact }}
+        id: restore-build-cache
+        with:
+          path: $OUTPUT_DIST_PATH
+          key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+      - name: Restore the build from artifact
+        uses: actions/download-artifact@v3
+        if: ${{ inputs.use_artifact }}
+        id: restore-build-artifact
+        with:
+          name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
+          path: $OUTPUT_DIST_PATH
       - name: Create release folder
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -376,7 +340,6 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
-
       - name: Copy deployment for Next.js
         if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
@@ -388,7 +351,6 @@ jobs:
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Copy deployment for other
         if: ${{ env.OUTPUT_FRAMEWORK != 'next' || env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
@@ -400,7 +362,6 @@ jobs:
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Deploy to ${{ inputs.environment }}
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -410,7 +371,6 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
-
       - name: Deploy the release
         uses: appleboy/ssh-action@v0.1.6
         id: deploy-release
@@ -430,7 +390,6 @@ jobs:
             else
               passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
             fi
-
       - name: Clean up failed release
         uses: appleboy/ssh-action@v0.1.6
         if: ${{ failure() }}
@@ -443,7 +402,6 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
             passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
-
       - name: Clean up release folder
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -453,7 +411,6 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
-
       - name: Notify on Slack
         env:
           SUCCESS: ${{ steps.deploy-release.outcome == 'success' }}

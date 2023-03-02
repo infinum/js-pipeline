@@ -51,7 +51,7 @@ runs:
         node-version-file: '.node-version'
     - name: Cache node modules for Next.js
       uses: actions/cache@v3
-      if: ${{ inputs.framework == 'next' }}
+      if: ${{ inputs.framework == 'next' && inputs.ssr }}
       with:
         path: |
           ~/.npm
