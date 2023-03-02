@@ -87,6 +87,7 @@ runs:
     - name: Override env.json
       if: ${{ inputs.override_env_json != '' }}
       run: mv ${{ inputs.override_env_json }}.${{ inputs.environment }} ${{ inputs.override_env_json }}
+      shell: bash
   
     - name: Detect env
       uses: infinum/js-pipeline/.github/actions/detect-env@v1
