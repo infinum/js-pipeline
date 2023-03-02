@@ -232,6 +232,12 @@ jobs:
     name: 'Lint the code'
     if: ${{ contains(inputs.ci_steps, 'lint') }}
     runs-on: ${{ inputs.runner }}
+    env:
+      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
+#      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
+#      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
+#      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -239,9 +245,9 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/bootstrap@v2
         with:
           runner: ${{ inputs.runner }}
-          package_manager: ${{ env.package_manager }}
+          package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.output_framework }}
+          framework: $OUTPUT_FRAMEWORK
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Run lint
         shell: bash
@@ -253,11 +259,11 @@ jobs:
     if: ${{ contains(inputs.ci_steps, 'test') }}
     runs-on: ${{ inputs.runner }}
     env:
-      output_framework: ${{ needs.build.outputs.output_framework }}
-      output_ssr: ${{ needs.build.outputs.output_ssr }}
-      output_package_manager: ${{ needs.build.outputs.output_package_manager }}
-      output_newrelic: ${{ needs.build.outputs.output_newrelic }}
-      output_dist_path: ${{ needs.build.outputs.output_dist_path }}
+      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
+#      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
+#      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
+#      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -265,9 +271,9 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/bootstrap@v2
         with:
           runner: ${{ inputs.runner }}
-          package_manager: ${{ env.output_package_manager }}
+          package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.output_framework }}
+          framework: $OUTPUT_FRAMEWORK
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Run test
         shell: bash
@@ -278,6 +284,12 @@ jobs:
     name: 'Run tests with coverage'
     if: ${{ contains(inputs.ci_steps, 'jest') }}
     runs-on: ${{ inputs.runner }}
+    env:
+      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
+#      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
+      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
+#      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
+#      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -285,9 +297,9 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/bootstrap@v2
         with:
           runner: ${{ inputs.runner }}
-          package_manager: ${{ env.output_package_manager }}
+          package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
-          framework: ${{ env.output_framework }}
+          framework: $OUTPUT_FRAMEWORK
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
       - name: Test Coverage
         id: testCoverage
@@ -313,6 +325,12 @@ jobs:
     name: 'Deploy the application'
     if: ${{ contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
+    env:
+      OUTPUT_FRAMEWORK: ${{ needs.build.outputs.output_framework }}
+      OUTPUT_SSR: ${{ needs.build.outputs.output_ssr }}
+#      OUTPUT_PACKAGE_MANAGER: ${{ needs.build.outputs.output_package_manager }}
+      OUTPUT_NEWRELIC: ${{ needs.build.outputs.output_newrelic }}
+      OUTPUT_DIST_PATH: ${{ needs.build.outputs.output_dist_path }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -335,14 +353,14 @@ jobs:
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
 
       - name: Prepare Next.js standalone # Remove - mentioned in previous step
-        if: ${{ env.output_framework == 'next' && env.output_ssr == 'true' }}
+        if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
         run: |
           mv ./.next/standalone/server.js ./.next/standalone/index.js
           cp -r ./public .next/standalone
           cp -r ./.next/static ./.next/standalone/.next
           cp ./next.config.js ./.next/standalone/next.config.js
           cp ./.node-version  ./.next/standalone/.node-version
-          if ${{ env.output_newrelic == 'true' }}; then
+          if $OUTPUT_NEWRELIC; then
             cp ./newrelic.js ./.next/standalone/newrelic.js
           fi
 
@@ -360,11 +378,11 @@ jobs:
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
 
       - name: Copy deployment for Next.js
-        if: ${{ env.output_framework == 'next' && env.output_ssr == 'true' }}
+        if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: ${{ env.output_dist_path }}
+          path: $OUTPUT_DIST_PATH
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -372,11 +390,11 @@ jobs:
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: Copy deployment for other
-        if: ${{ env.output_framework != 'next' || env.output_ssr == 'false' }}
+        if: ${{ env.OUTPUT_FRAMEWORK != 'next' || env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: ${{ env.output_dist_path }}
+          path: $OUTPUT_DIST_PATH
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -405,7 +423,7 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if ${{ env.output_newrelic }}
+            if $OUTPUT_NEWRELIC
             then
               npm install @newrelic/next
               NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
