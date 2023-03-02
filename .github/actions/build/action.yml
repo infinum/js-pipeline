@@ -50,7 +50,7 @@ inputs:
 
   override_env_json:
     required: false
-    description: 'Contents of the env.json file to override with'
+    description: 'Override env.json file'
 
   # vault:
   VAULT_ADDR:
@@ -86,18 +86,15 @@ runs:
       uses: actions/checkout@v3
     - name: Override env.json
       if: ${{ inputs.override_env_json != '' }}
-      uses: "DamianReeves/write-file-action@master"
-      with:
-        path: ./src/assets/env.json
-        write-mode: overwrite
-        contents: ${{ inputs.override_env_json }}
+      run: mv appsettings_dev.json appsettings.json
+  
     - name: Detect env
       uses: infinum/js-pipeline/.github/actions/detect-env@v1
       with:
         runner: ${{ inputs.runner }}
         framework: ${{ inputs.framework }}
         ssr: ${{ inputs.ssr }}
-        package_manager: ${{ inputs.package_manager }}
+        package_manager: ${{ inputs.package_manager }}  
         newrelic: ${{ inputs.newrelic }}
         dist_path: ${{ inputs.dist_path }}
     - name: 'Bootstrap up the Node.js environment'
