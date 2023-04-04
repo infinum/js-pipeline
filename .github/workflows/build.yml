@@ -138,7 +138,7 @@ on:
 
       # Additional environment variables set in the workflow
       # Format: JSON object with string values (key becomes env variable name, value becomes env variable value)
-      # Example: '{ "FOO": "BAR", "BAZ": "${{ secrets.BAZ }}" }"
+      # Example: '{ "FOO": "BAR", "BAZ": "${{ secrets.BAZ }}" }'
       ADDITIONAL_VARIABLES:
         required: false
 jobs:
