@@ -119,6 +119,11 @@ on:
         type: string
         description: 'Override the env.json file'
 
+      timeout_minutes:
+        required: false
+        type: number
+        default: 10
+
     secrets:
       VAULT_ADDR:
         required: false
@@ -141,6 +146,7 @@ jobs:
   setup:
     name: 'Environment setup'
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -166,6 +172,7 @@ jobs:
     name: 'Build the application'
     if: ${{ contains(inputs.ci_steps, 'build') }}
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -221,6 +228,7 @@ jobs:
     name: 'Lint the code'
     if: ${{ contains(inputs.ci_steps, 'lint') }}
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -249,6 +257,7 @@ jobs:
     name: 'Run tests'
     if: ${{ contains(inputs.ci_steps, 'test') }}
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -277,6 +286,7 @@ jobs:
     name: 'Run tests with coverage'
     if: ${{ contains(inputs.ci_steps, 'jest') }}
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -308,6 +318,7 @@ jobs:
     name: 'Analyze the Next.js bundle size'
     if: ${{ contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
