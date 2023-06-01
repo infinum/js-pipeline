@@ -129,14 +129,19 @@ on:
     secrets:
       VAULT_ADDR:
         required: false
+
       VAULT_AUTH_METHOD:
         required: false
+
       VAULT_AUTH_ROLE_ID:
         required: false
+
       VAULT_AUTH_SECRET_ID:
         required: false
+
       SLACK_BOT_TOKEN:
         required: false
+
       SSH_PRIVATE_KEY:
         required: false
 
@@ -161,8 +166,9 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v2
+        uses: infinum/js-pipeline/.github/actions/detect-env@v3
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -170,14 +176,16 @@ jobs:
           package_manager: ${{ inputs.package_manager }}
           newrelic: ${{ inputs.newrelic }}
           dist_path: ${{ inputs.dist_path }}
+
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v2
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+
       - id: export_variables
         run: |
           echo "framework=${{ env.framework }}" >> "$GITHUB_OUTPUT"
@@ -186,6 +194,7 @@ jobs:
           echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
           echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
           echo "artifact_path=${{ env.artifact_path }}" >> "$GITHUB_OUTPUT"
+
   build:
     needs: [setup]
     name: 'Build'
@@ -202,8 +211,9 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@v2
+        uses: infinum/js-pipeline/.github/actions/build@v3
         with:
           runner: ${{ inputs.runner }}
           framework: $OUTPUT_FRAMEWORK
@@ -222,6 +232,7 @@ jobs:
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+
   lint:
     needs: [setup]
     name: 'Lint the code'
@@ -234,14 +245,16 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v2
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
           package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
           framework: $OUTPUT_FRAMEWORK
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+
       - name: Run lint
         shell: bash
         id: 'lint'
@@ -258,18 +271,21 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v2
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
           package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
           framework: $OUTPUT_FRAMEWORK
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+
       - name: Run test
         shell: bash
         id: 'test'
         run: 'npm run test'
+
   jest:
     needs: [setup]
     name: 'Run tests with coverage'
@@ -282,14 +298,16 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v2
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
           package_manager: $OUTPUT_PACKAGE_MANAGER
           node_version: ${{ inputs.node_version }}
           framework: $OUTPUT_FRAMEWORK
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+
       - name: Test Coverage
         id: testCoverage
         uses: anuraag016/Jest-Coverage-Diff@master
@@ -297,6 +315,7 @@ jobs:
           fullCoverageDiff: false
           runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
           delta: 0.5
+
   analyze:
     needs: [build]
     name: 'Analyze the Next.js bundle size'
@@ -306,10 +325,12 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@v2
+        uses: infinum/js-pipeline/.github/actions/analyze@v3
         with:
           workflow: ${{ inputs.workflow }}
+
   deploy:
     needs: [build]
     name: 'Deploy the application'
@@ -326,8 +347,10 @@ jobs:
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
+
       - id: commit
         uses: pr-mpt/actions-commit-hash@v2
+
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
         uses: actions/cache/restore@v3
@@ -336,6 +359,7 @@ jobs:
         with:
           path: $OUTPUT_DIST_PATH
           key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+
       - name: Restore the build from artifact
         uses: actions/download-artifact@v3
         if: ${{ inputs.use_artifact }}
@@ -343,6 +367,7 @@ jobs:
         with:
           name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
           path: $OUTPUT_DIST_PATH
+
       - name: Create release folder
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -352,6 +377,7 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+
       - name: Copy deployment for Next.js
         if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
@@ -363,6 +389,7 @@ jobs:
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Copy deployment for other
         if: ${{ env.OUTPUT_FRAMEWORK != 'next' || env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
@@ -374,6 +401,7 @@ jobs:
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
       - name: Deploy to ${{ inputs.environment }}
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -383,6 +411,7 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+
       - name: Deploy the release
         uses: appleboy/ssh-action@v0.1.6
         id: deploy-release
@@ -402,6 +431,7 @@ jobs:
             else
               passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
             fi
+
       - name: Clean up failed release
         uses: appleboy/ssh-action@v0.1.6
         if: ${{ failure() }}
@@ -414,6 +444,7 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
             passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+
       - name: Clean up release folder
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -423,6 +454,7 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+
       - name: Notify on Slack
         env:
           SUCCESS: ${{ steps.deploy-release.outcome == 'success' }}

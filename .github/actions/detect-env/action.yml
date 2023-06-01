@@ -34,6 +34,7 @@ runs:
   steps:
     - name: Git checkout
       uses: actions/checkout@v3
+
     - name: Detect framework
       shell: bash
       run: |
@@ -47,6 +48,7 @@ runs:
         else
           echo "framework=react" >> $GITHUB_ENV
         fi
+
     - name: Detect SSR
       shell: bash
       run: |
@@ -57,6 +59,7 @@ runs:
         else
           echo "ssr=false" >> $GITHUB_ENV
         fi
+
     - name: Detect package manager
       shell: bash
       run: |
@@ -67,6 +70,7 @@ runs:
         else
           echo "package_manager=yarn" >> $GITHUB_ENV
         fi
+
     - name: Detect tooling
       shell: bash
       run: |
@@ -77,6 +81,7 @@ runs:
         else
           echo "newrelic=false" >> $GITHUB_ENV
         fi
+
     - name: Detect build path
       shell: bash
       run: |
@@ -93,6 +98,7 @@ runs:
           echo "dist_path=./dist/*" >> $GITHUB_ENV
           echo "artifact_path=./dist/*" >> $GITHUB_ENV
         fi
+
     - name: Summary
       shell: bash
       run: |

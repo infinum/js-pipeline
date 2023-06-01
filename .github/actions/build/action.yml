@@ -55,7 +55,7 @@ inputs:
   dist_path:
     required: false
     description: 'Path to dist folder. If not defined, a path based on framework will be used.'
-  
+
   artifact_path:
     required: false
     description: 'Folder that gets uploaded to artifact.'
@@ -68,15 +68,19 @@ inputs:
   VAULT_ADDR:
     required: false
     description: 'Vault address'
+
   VAULT_AUTH_METHOD:
     required: false
     description: 'Vault authentication method'
+
   VAULT_AUTH_ROLE_ID:
     required: false
     description: 'Vault authentication role ID'
+
   VAULT_AUTH_SECRET_ID:
     required: false
     description: 'Vault authentication secret ID'
+
 
 runs:
   using: 'composite'
@@ -94,21 +98,25 @@ runs:
           echo "ADDITIONAL_VARIABLES secret you supplied is not a valid JSON object. Check the formatting of the secret."
           exit 1
         fi
+
     - name: Git checkout
       uses: actions/checkout@v3
+
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@v2
+      uses: infinum/js-pipeline/.github/actions/bootstrap@v3
       with:
         runner: ${{ inputs.runner }}
         package_manager: ${{ inputs.package_manager }}
         node_version: ${{ inputs.node_version }}
         framework: ${{ inputs.framework }}
         env_vars: ${{ inputs.env_vars }}
+
     - name: Debug
       if: ${{ inputs.secrets }}
       shell: bash
       run: |
         echo "Secrets import starting"
+
     - name: Import Secrets
       if: ${{ inputs.secrets }}
       uses: hashicorp/vault-action@v2.4.3
@@ -119,20 +127,24 @@ runs:
         secretId: ${{ inputs.VAULT_AUTH_SECRET_ID }}
         secrets: |
           js/${{ inputs.secrets }}/${{ inputs.environment }} secrets | app_secrets ;
+
     - name: Add secrets
       if: ${{env.app_secrets}}
       shell: bash
       run: |
         echo "${{ env.app_secrets }}" > .env
         echo "Secrets have been added to the .env file"
+
     - name: Override env.json
       if: ${{ inputs.override_env_json != '' }}
       run: mv ${{ inputs.override_env_json }}.${{ inputs.environment }} ${{ inputs.override_env_json }}
       shell: bash
+
     - name: Run build
       shell: bash
       id: 'build'
       run: 'NEXT_TELEMETRY_DISABLED=1 npm run build'
+
     - name: Prepare Next.js standalone
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
       shell: bash
@@ -145,11 +157,13 @@ runs:
         if ${{ inputs.newrelic }}; then
           cp ./newrelic.js ./.next/standalone/newrelic.js
         fi
+
     - name: Check file existence
       id: check_node_version
       uses: andstor/file-existence-action@v2
       with:
         files: ".node-version"
+
     - name: Prepare other node builds
       if: steps.check_node_version.outputs.files_exists
       shell: bash
@@ -158,8 +172,10 @@ runs:
         if ${{ inputs.newrelic }}; then
           cp ./newrelic.js ./${{ inputs.dist_path }}/newrelic.js
         fi
+
     - id: commit
       uses: pr-mpt/actions-commit-hash@v2
+
     - name: Cache the build
       id: cache-build
       if: ${{ !inputs.use_artifact && contains(inputs.ci_steps, 'deploy') }}
@@ -167,11 +183,13 @@ runs:
       with:
         path: ${{ inputs.dist_path }}
         key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+
     - name: Prepare artifact for Next.js
       shell: bash
       if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy')) || inputs.use_artifact }}
       id: 'prepare-artifact'
       run: 'rm -rf .next/cache'
+
     - name: Upload artifacts for Next.js - Artifact Path
       if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') }}
       uses: actions/upload-artifact@v3
@@ -179,6 +197,7 @@ runs:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.artifact_path }}
         retention-days: 30
+
     - name: Upload artifacts for Next.js - Dist Path
       if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact ) }}
       uses: actions/upload-artifact@v3
@@ -186,6 +205,7 @@ runs:
         name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
         path: ${{ inputs.dist_path }}
         retention-days: 30
+
     - name: Generic upload artifacts
       if: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact }}
       uses: actions/upload-artifact@v3

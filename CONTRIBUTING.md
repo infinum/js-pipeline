@@ -83,7 +83,7 @@ The reasoning behind why Next.js is a special case of React:
 
 ## TODO
 
-* [ ] Angular support <!-- Check if this can be removed -->
+* [ + ] Angular support
 * [ ] CSR React/Next support
 * [ ] Add Slack notifications for jobs other than deploy
 * [ ] Handle situation where SSR is passed as `false`
