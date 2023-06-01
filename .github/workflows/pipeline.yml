@@ -121,6 +121,11 @@ on:
         required: false
         type: string
 
+      timeout_minutes:
+        required: false
+        type: number
+        default: 10
+
     secrets:
       VAULT_ADDR:
         required: false
@@ -152,6 +157,7 @@ jobs:
       output_newrelic: ${{ steps.export_variables.outputs.newrelic }}
       output_dist_path: ${{ steps.export_variables.outputs.dist_path }}
       output_artifact_path: ${{ steps.export_variables.outputs.artifact_path }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -192,6 +198,7 @@ jobs:
       OUTPUT_NEWRELIC: ${{ needs.setup.outputs.output_newrelic }}
       OUTPUT_DIST_PATH: ${{ needs.setup.outputs.output_dist_path }}
       OUTPUT_ARTIFACT_PATH: ${{ needs.setup.outputs.output_artifact_path }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -223,6 +230,7 @@ jobs:
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
       OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -246,6 +254,7 @@ jobs:
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
       OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -269,6 +278,7 @@ jobs:
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
       OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -292,6 +302,7 @@ jobs:
     name: 'Analyze the Next.js bundle size'
     if: ${{ contains(inputs.ci_steps, 'analyze') }}
     runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3
@@ -311,6 +322,7 @@ jobs:
       OUTPUT_NEWRELIC: ${{ needs.setup.outputs.output_newrelic }}
       OUTPUT_DIST_PATH: ${{ needs.setup.outputs.output_dist_path }}
       OUTPUT_ARTIFACT_PATH: ${{ needs.setup.outputs.output_artifact_path }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
         uses: actions/checkout@v3

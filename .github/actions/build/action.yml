@@ -60,6 +60,10 @@ inputs:
     required: false
     description: 'Folder that gets uploaded to artifact.'
 
+  override_env_json:
+    required: false
+    description: 'Override env.json file'
+
   # vault:
   VAULT_ADDR:
     required: false
@@ -79,7 +83,7 @@ runs:
   steps:
     - name: Set up additional environment variables
       env:
-        ADDITIONAL_VARIABLES: ${{ inputs.env_vars }}  # Why is this used? On line 99 env_vars is used.
+        ADDITIONAL_VARIABLES: ${{ inputs.env_vars }}
       if: ${{ env.ADDITIONAL_VARIABLES }}
       shell: bash
       run: >
@@ -121,6 +125,10 @@ runs:
       run: |
         echo "${{ env.app_secrets }}" > .env
         echo "Secrets have been added to the .env file"
+    - name: Override env.json
+      if: ${{ inputs.override_env_json != '' }}
+      run: mv ${{ inputs.override_env_json }}.${{ inputs.environment }} ${{ inputs.override_env_json }}
+      shell: bash
     - name: Run build
       shell: bash
       id: 'build'

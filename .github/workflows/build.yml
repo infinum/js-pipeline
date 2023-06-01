@@ -1,0 +1,328 @@
+name: Build workflow
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_call:
+    inputs:
+      # Selects the runner on which the workflow will run
+      # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+      runner:
+        required: false
+        type: string
+        default: ubuntu-latest
+
+      # Used for accessing environment specific secrets vault and Slack integration messages
+      environment:
+        required: true
+        type: string
+
+      # React, Next, Angular or Node
+      # if not defined:
+      # * use angular if angular.json is present
+      # * use next if next.config.js is present
+      # * otherwise use react
+      framework:
+        required: false
+        type: string
+
+      # Server-side rendering or client-side rendering
+      # if not defined:
+      # * use ssr if next.config.js is present
+      # * otherwise use csr
+      ssr:
+        required: false
+        type: boolean
+        default: false
+
+      # Should npm or yarn be used to install dependencies?
+      # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
+      package_manager:
+        required: false
+        type: string
+
+      # should generally be left undefined - it will default to the `.node-version` file in the root of the project
+      node_version:
+        required: false
+        type: string
+
+      # Slack channel name where the notifications will be sent
+      slack_notification_channel:
+        required: false
+        type: string
+
+      # What types of notifications should be sent?
+      # Valid values:
+      #   - 'success'
+      #   - 'failure'
+      #   - 'all'
+      notify_on:
+        required: false
+        type: string
+        default: 'all'
+
+      # Steps that should be executed during build
+      # Valid values:
+      #   - 'audit'
+      #   - 'lint'
+      #   - 'test'
+      #   - 'jest'
+      #   - 'build'
+      #   - 'analyze'
+      #   - 'deploy'
+      ci_steps:
+        required: true
+        type: string
+
+      # Secrets vault to be used
+      secrets:
+        required: false
+        type: string
+
+      newrelic:
+        required: false
+        type: boolean
+
+      workflow:
+        required: false
+        type: string
+
+      deploy_host:
+        required: false
+        type: string
+
+      deploy_to:
+        required: false
+        type: string
+
+      deploy_user:
+        required: false
+        type: string
+
+      deploy_port:
+        required: false
+        type: number
+
+      project_icon:
+        required: false
+        type: string
+        default: 'https://i.imgur.com/v6bLyxF.png'
+
+      dist_path:
+        required: false
+        type: string
+
+      override_env_json:
+        required: false
+        type: string
+        description: 'Override the env.json file'
+
+      timeout_minutes:
+        required: false
+        type: number
+        default: 10
+
+    secrets:
+      VAULT_ADDR:
+        required: false
+      VAULT_AUTH_METHOD:
+        required: false
+      VAULT_AUTH_ROLE_ID:
+        required: false
+      VAULT_AUTH_SECRET_ID:
+        required: false
+      SLACK_BOT_TOKEN:
+        required: false
+
+      # Additional environment variables set in the workflow
+      # Format: JSON object with string values (key becomes env variable name, value becomes env variable value)
+      # Example: '{ "FOO": "BAR", "BAZ": "${{ secrets.BAZ }}" }'
+      ADDITIONAL_VARIABLES:
+        required: false
+jobs:
+  # Not sure if this is needed or will it be taken from previous workflow?
+  setup:
+    name: 'Environment setup'
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+          dist_path: ${{ inputs.dist_path }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+  build:
+    needs: [setup]
+    name: 'Build the application'
+    if: ${{ contains(inputs.ci_steps, 'build') }}
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+
+      - name: Build
+        uses: infinum/js-pipeline/.github/actions/build@v2
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          newrelic: ${{ inputs.newrelic }}
+          environment: ${{ inputs.environment }}
+          secrets: ${{ inputs.secrets }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          dist_path: ${{ inputs.dist_path }}
+          override_env_json: ${{ inputs.override_env_json }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
+          VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+
+      - name: Prepare Next.js standalone
+        if: ${{ env.framework == 'next' && env.ssr == 'true' }}
+        run: |
+          mv ./.next/standalone/server.js ./.next/standalone/index.js
+          cp -r ./public .next/standalone
+          cp -r ./.next/static ./.next/standalone/.next
+          cp ./next.config.js ./.next/standalone/next.config.js
+          cp ./.node-version  ./.next/standalone/.node-version
+          if ${{ env.newrelic == 'true' }}; then
+            cp ./newrelic.js ./.next/standalone/newrelic.js
+          fi
+
+      - name: Save build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: public
+          path: ${{ inputs.dist_path }}
+          retention-days: 1
+
+  lint:
+    needs: [setup]
+    name: 'Lint the code'
+    if: ${{ contains(inputs.ci_steps, 'lint') }}
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Run lint
+        shell: bash
+        id: 'lint'
+        run: 'npm run lint'
+  test:
+    needs: [setup]
+    name: 'Run tests'
+    if: ${{ contains(inputs.ci_steps, 'test') }}
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Run test
+        shell: bash
+        id: 'test'
+        run: 'npm run test'
+  jest:
+    needs: [setup]
+    name: 'Run tests with coverage'
+    if: ${{ contains(inputs.ci_steps, 'jest') }}
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@v1
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+      - name: 'Bootstrap up the Node.js environment'
+        uses: infinum/js-pipeline/.github/actions/bootstrap@v1
+        with:
+          runner: ${{ inputs.runner }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          framework: ${{ env.framework }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+      - name: Test Coverage
+        id: testCoverage
+        uses: anuraag016/Jest-Coverage-Diff@master
+        with:
+          fullCoverageDiff: false
+          runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
+          delta: 0.5
+  analyze:
+    needs: [build]
+    name: 'Analyze the Next.js bundle size'
+    if: ${{ contains(inputs.ci_steps, 'analyze') }}
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v3
+      - name: 'Analyze the bundle'
+        uses: infinum/js-pipeline/.github/actions/analyze@v1
+        with:
+          workflow: ${{ inputs.workflow }}
