@@ -453,8 +453,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ inputs.deploy_port }}
           script: |
-            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
-
+            #            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf {}
+            echo 'test'
       - name: Notify on Slack
         env:
           SUCCESS: ${{ steps.deploy-release.outcome == 'success' }}
