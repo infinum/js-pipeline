@@ -216,16 +216,16 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/build@v3
         with:
           runner: ${{ inputs.runner }}
-          framework: $OUTPUT_FRAMEWORK
-          ssr: $OUTPUT_SSR
-          package_manager: $OUTPUT_PACKAGE_MANAGER
+          framework: ${{ env.OUTPUT_FRAMEWORK }}
+          ssr: ${{ env.OUTPUT_SSR }}
+          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
-          newrelic: $OUTPUT_NEWRELIC
+          newrelic: ${{ env.OUTPUT_NEWRELIC }}
           environment: ${{ inputs.environment }}
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          dist_path: $OUTPUT_DIST_PATH
-          artifact_path: $OUTPUT_ARTIFACT_PATH
+          dist_path: ${{ env.OUTPUT_DIST_PATH }}
+          artifact_path: ${{ env.OUTPUT_ARTIFACT_PATH }}
           use_artifact: ${{ inputs.use_artifact }}
           ci_steps: ${{ inputs.ci_steps }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
@@ -250,9 +250,9 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
-          package_manager: $OUTPUT_PACKAGE_MANAGER
+          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
-          framework: $OUTPUT_FRAMEWORK
+          framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
 
       - name: Run lint
@@ -276,9 +276,9 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
-          package_manager: $OUTPUT_PACKAGE_MANAGER
+          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
-          framework: $OUTPUT_FRAMEWORK
+          framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
 
       - name: Run test
@@ -303,9 +303,9 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/bootstrap@v3
         with:
           runner: ${{ inputs.runner }}
-          package_manager: $OUTPUT_PACKAGE_MANAGER
+          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
-          framework: $OUTPUT_FRAMEWORK
+          framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
 
       - name: Test Coverage
@@ -357,7 +357,7 @@ jobs:
         if: ${{ !inputs.use_artifact }}
         id: restore-build-cache
         with:
-          path: $OUTPUT_DIST_PATH
+          path: ${{ env.OUTPUT_DIST_PATH }}
           key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
 
       - name: Restore the build from artifact
@@ -366,7 +366,7 @@ jobs:
         id: restore-build-artifact
         with:
           name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
-          path: $OUTPUT_DIST_PATH
+          path: ${{ env.OUTPUT_DIST_PATH }}
 
       - name: Create release folder
         uses: appleboy/ssh-action@v0.1.6
@@ -383,7 +383,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: $OUTPUT_DIST_PATH
+          path: ${{ env.OUTPUT_DIST_PATH }}
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -395,7 +395,7 @@ jobs:
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr
-          path: $OUTPUT_DIST_PATH
+          path: ${{ env.OUTPUT_DIST_PATH }}
           remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
@@ -424,7 +424,7 @@ jobs:
             cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}
             ln -nfs releases/${{ steps.commit.outputs.short }}/ current
             cd current
-            if $OUTPUT_NEWRELIC
+            if ${{ env.OUTPUT_NEWRELIC }}
             then
               npm install @newrelic/next
               NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
