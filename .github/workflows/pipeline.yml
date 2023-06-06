@@ -354,7 +354,7 @@ jobs:
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
         uses: actions/cache/restore@v3
-        if: ${{ !inputs.use_artifact }}
+        if: ${{ inputs.use_artifact == "false" }}
         id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
@@ -441,10 +441,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ inputs.deploy_port }}
           script: |
-            echo 'temp'
-#            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
-#            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
-#            passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+           cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
+           cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
+           passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
 
       - name: Clean up release folder
         uses: appleboy/ssh-action@v0.1.6
