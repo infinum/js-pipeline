@@ -332,7 +332,7 @@ jobs:
           workflow: ${{ inputs.workflow }}
 
   deploy:
-    needs: [build]
+    needs: [setup, build]
     name: 'Deploy the application'
     if: ${{ contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
