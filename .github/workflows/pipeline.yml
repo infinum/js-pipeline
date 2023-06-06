@@ -354,7 +354,7 @@ jobs:
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
         uses: actions/cache/restore@v3
-        if: ${{ inputs.use_artifact == "false" }}
+        if: ${{ !inputs.use_artifact }}
         id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
