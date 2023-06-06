@@ -178,7 +178,7 @@ runs:
 
     - name: Cache the build
       id: cache-build
-      if: ${{ (!inputs.use_artifact) && contains(inputs.ci_steps, 'deploy') }}
+      if: ${{ !inputs.use_artifact && contains(inputs.ci_steps, 'deploy') }}
       uses: actions/cache@v3
       with:
         path: ${{ inputs.dist_path }}
@@ -186,7 +186,7 @@ runs:
 
     - name: Prepare artifact for Next.js
       shell: bash
-      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy')) && inputs.use_artifact }}
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact) ) }}
       id: 'prepare-artifact'
       run: 'rm -rf .next/cache'
 
