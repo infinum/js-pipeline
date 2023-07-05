@@ -182,9 +182,9 @@ runs:
         echo "Contains deploy: ${{ contains(inputs.ci_steps, 'deploy') }}"
         echo "Contains analyze: ${{ contains(inputs.ci_steps, 'analyze') }}"
         echo "Framework is next: ${{ inputs.framework == 'next' }}"
-        echo "Use artifact false: ${{ !inputs.use_artifact }}"
+        echo "Use artifact false: ${{ inputs.use_artifact == 'false' }}"
         echo "Use artifact true: ${{ inputs.use_artifact }}"
-        echo "Cache the build: ${{ !inputs.use_artifact && contains(inputs.ci_steps, 'deploy') }}"
+        echo "Cache the build: ${{ inputs.use_artifact == 'false' && contains(inputs.ci_steps, 'deploy') }}"
         echo "Prepare artifact for Next.js: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact) ) }}"
         echo "Upload artifacts for Next.js - Artifact Path: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') }}"
         echo "Upload artifacts for Next.js - Dist Path: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact ) }}"
@@ -192,7 +192,7 @@ runs:
 
     - name: Cache the build
       id: cache-build
-      if: ${{ !inputs.use_artifact && contains(inputs.ci_steps, 'deploy') }}
+      if: ${{ inputs.use_artifact == 'false' && contains(inputs.ci_steps, 'deploy') }}
       uses: actions/cache@v3
       with:
         path: ${{ inputs.dist_path }}
