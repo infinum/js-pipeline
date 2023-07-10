@@ -323,6 +323,40 @@ jobs:
         uses: infinum/js-pipeline/.github/actions/analyze@master
         with:
           workflow: ${{ inputs.workflow }}
+
+  docker:
+    needs:
+      - build
+    name: 'Build and push Docker image'
+    if: ${{ contains(inputs.ci_steps, 'docker') }}
+    runs-on: ${{ inputs.runner }}
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: 'build'
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          # TODO: How to pass these?
+          aws-access-key-id: ${{ vars.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Build and push image
+        id: build-image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ inputs.environment }}-${{ github.sha }}
+            #${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.ref_name }} # Is this one required in build or should we output that for "deploy"?
+
+
   deploy:
     needs: [setup]
     name: 'Deploy the application'
