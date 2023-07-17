@@ -46,8 +46,8 @@ on:
       # If left false, cache will be used for deploy
       use_artifact:
         required: false
-        type: boolean
-        default: false
+        type: string
+        default: "false"
 
       # should generally be left undefined - it will default to the `.node-version` file in the root of the project
       node_version:
@@ -226,7 +226,7 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ env.OUTPUT_DIST_PATH }}
           artifact_path: ${{ env.OUTPUT_ARTIFACT_PATH }}
-          use_artifact: ${{ inputs.use_artifact }}
+          use_artifact: ${{ inputs.use_artifact == 'true' }}
           ci_steps: ${{ inputs.ci_steps }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
@@ -362,7 +362,7 @@ jobs:
 
       - name: Restore the build from artifact
         uses: actions/download-artifact@v3
-        if: ${{ inputs.use_artifact }}
+        if: ${{ inputs.use_artifact == 'true' }}
         id: restore-build-artifact
         with:
           name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'

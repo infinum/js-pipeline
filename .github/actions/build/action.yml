@@ -33,7 +33,7 @@ inputs:
     description: 'Should New Relic be used? If not defined, use New Relic if `newrelic.js` is present, otherwise do not use New Relic'
 
   use_artifact:
-    required: false
+    required: true
     description: 'Defines whether to cache or artifact the build'
 
   ci_steps:
@@ -176,20 +176,6 @@ runs:
     - id: commit
       uses: pr-mpt/actions-commit-hash@v2
 
-    - name: Test echos
-      shell: bash
-      run: |
-        echo "Contains deploy: ${{ contains(inputs.ci_steps, 'deploy') }}"
-        echo "Contains analyze: ${{ contains(inputs.ci_steps, 'analyze') }}"
-        echo "Framework is next: ${{ inputs.framework == 'next' }}"
-        echo "Use artifact false: ${{ inputs.use_artifact == 'false' }}"
-        echo "Use artifact true: ${{ inputs.use_artifact }}"
-        echo "Cache the build: ${{ inputs.use_artifact == 'false' && contains(inputs.ci_steps, 'deploy') }}"
-        echo "Prepare artifact for Next.js: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact) ) }}"
-        echo "Upload artifacts for Next.js - Artifact Path: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') }}"
-        echo "Upload artifacts for Next.js - Dist Path: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact ) }}"
-        echo "Generic upload artifacts: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact }}"
-
     - name: Cache the build
       id: cache-build
       if: ${{ inputs.use_artifact == 'false' && contains(inputs.ci_steps, 'deploy') }}
@@ -200,7 +186,7 @@ runs:
 
     - name: Prepare artifact for Next.js
       shell: bash
-      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact) ) }}
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) ) }}
       id: 'prepare-artifact'
       run: 'rm -rf .next/cache'
 
@@ -213,7 +199,7 @@ runs:
         retention-days: 30
 
     - name: Upload artifacts for Next.js - Dist Path
-      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact ) }}
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) }}
       uses: actions/upload-artifact@v3
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
@@ -221,7 +207,7 @@ runs:
         retention-days: 30
 
     - name: Generic upload artifacts
-      if: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact }}
+      if: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact == 'true' }}
       uses: actions/upload-artifact@v3
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
