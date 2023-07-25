@@ -1,0 +1,44 @@
+# Pipeline options
+
+## Inputs
+
+Inputs that should be defined in the workflow file are listed bellow. They are not required if you're not using the job that requires them.
+
+| property | description | Relevant jobs | required | default |
+| --- | --- | --- | --- | --- |
+| `ci_steps` | Steps to run in the workflow, as a space separated string. [Available options](available-jobs) are listed on a separate page | all | **Yes** | N/A |
+| `workflow` | Path to the current workflow file | `analyze` | No | N/A |
+| `secrets` | Name of the vault to be used | `deploy`, `build` | No | N/A |
+| `deploy_host` | Host to deploy to | `deploy` | No | N/A |
+| `deploy_user` | User to deploy as | `deploy` | No | N/A |
+| `deploy_port` | Port of the deploy server | `deploy` | No | N/A |
+| `slack_notification_channel` | Slack channel to send notifications to. | `deploy` | No | N/A |
+| `environment` | Environment to deploy to | `deploy` | **Yes** | N/A |
+
+Inputs that may be defined in the workflow file, but have defaults that are usually fine:
+
+| property | description | Relevant jobs | required | default |
+| --- | --- | --- | --- | --- |
+| `runner` | Runner to use for the action (OS/version). | all | No | `ubuntu-latest` |
+| `package_manager` | Package manager to use for the action. | all | No | Yarn if `yarn.lock` is present, npm otherwise |
+| `node_version` | Node.js version to use. | all | No | The one defined in `.node-version` |
+| `framework` | Project type - supported values are `angular`, `react`, `next` and `node` | all | No | `angular` if `angular.json` present in root, `next` if `next.config.js` present in root, otherwise `react` |
+| `deploy_to` | Path where the app is deployed on the server | `deploy` | No | `/home/{{deploy_user}}/www/{{deploy_host}}` |
+| `dist_path` | Path to build folder | `build, deploy` | No | `./dist/*` |
+| `newrelic` | Should we run server-side newrelic | `deploy` | No | `true` if `newrelic.js` exists in project root, `false` otherwise |
+| `ssr` | Whether to build the app in SSR mode. | `deploy` | No | `true` if framework is next, `false` otherwise |
+| `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | No | `all` |
+| `project_icon` | Icon to use for the notification | `deploy` | No | JS duck <img style={{width: 48}} src="https://i.imgur.com/v6bLyxF.png" role="presentation" /> |
+
+
+## Secrets
+
+| property | description | required |
+| --- | --- | --- |
+| `VAULT_ADDR` | Vault URL | No |
+| `VAULT_AUTH_METHOD` | Vault auth method | No |
+| `VAULT_AUTH_ROLE_ID` | Vault auth role ID | No |
+| `VAULT_AUTH_SECRET_ID` | Vault auth secret ID | No |
+| `SSH_PRIVATE_KEY` | Private SSH key used for deployment | No |
+| `SLACK_BOT_TOKEN` | Slack bot token for notifications | No |
+| `ADDITIONAL_VARIABLES` | Additional ENV variables to pass to the pipeline (in a serialized JSON) | No |

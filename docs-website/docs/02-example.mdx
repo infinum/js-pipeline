@@ -1,0 +1,51 @@
+# Examples 
+
+## Example build config
+
+```yaml
+# .github/workflows/pr.yml
+name: Build
+
+on:
+  pull_request:
+
+jobs:
+  test-analyze:
+    name: 'Run'
+    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@v3
+    with:
+      ci_steps: 'lint test analyze'
+      workflow: '.github/workflows/pr.yml'
+
+```
+
+## Example deploy config
+
+```yaml
+# .github/workflows/deploy_staging.yml
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    name: 'Deploy'
+    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@v3
+    with:
+      ci_steps: 'deploy'
+      secrets: 'js-my-project'
+      deploy_host: 'project-name.byinfinum.co'
+      deploy_user: 'js-project-name'
+      deploy_port: 22
+    secrets:
+      ADDITIONAL_VARIABLES: '{}'
+      SSH_PRIVATE_KEY: ${{ secrets.STAGING_KEY }}
+      VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+      VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
+      VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+      VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+```

@@ -1,0 +1,13 @@
+# Available jobs
+
+The jobs can be set as a space separated list within the [`ci_steps` input](options#inputs) in the pipeline.
+
+| Job name | Description |
+| --- | --- |
+| `lint` | Runs `npm run lint` |
+| `test` | Runs `npm run test` |
+| `jest` | Runs Jest tests with coverage comparison (useful for PRs) |
+| `audit` | Runs `npm run audit` |
+| `build` | Builds the app |
+| `deploy` | Deploys the app |
+| `analyze` | Runs a bundle analysis and comparison with the target branch (Next.js, WIP) |

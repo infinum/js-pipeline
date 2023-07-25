@@ -1,4 +1,7 @@
 {
-  "scripts": {},
-  "dependencies": {}
+  "scripts": {
+    "publish": "node publish.js"
+  },
+  "dependencies": {},
+  "version": "0.0.1"
 }
