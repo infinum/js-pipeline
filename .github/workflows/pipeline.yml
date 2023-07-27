@@ -49,6 +49,10 @@ on:
         type: string
         default: "false"
 
+      build_cache:
+        required: false
+        type: string
+
       # should generally be left undefined - it will default to the `.node-version` file in the root of the project
       node_version:
         required: false
@@ -198,7 +202,7 @@ jobs:
   build:
     needs: [setup]
     name: 'Build'
-    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy') }}
+    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy') && inputs.build_cache == '' }}
     runs-on: ${{ inputs.runner }}
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
@@ -334,7 +338,7 @@ jobs:
   deploy:
     needs: [setup, build]
     name: 'Deploy the application'
-    if: ${{ contains(inputs.ci_steps, 'deploy') }}
+    if: ${{ always() && inputs.build_cache != '' || contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
@@ -354,11 +358,19 @@ jobs:
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
         uses: actions/cache/restore@v3
-        if: ${{ inputs.use_artifact == 'false' }}
+        if: ${{ inputs.use_artifact == 'false' && inputs.build_cache == '' }}
         id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
           key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+
+      - name: Restore the previous build from cache
+        uses: actions/cache/restore@v3
+        if: ${{ inputs.use_artifact == 'false' && inputs.build_cache != '' }}
+        id: restore-build-cache
+        with:
+          path: ${{ env.OUTPUT_DIST_PATH }}
+          key: ${{ runner.os }}-build-${{ inputs.build_cache }}
 
       - name: Restore the build from artifact
         uses: actions/download-artifact@v3

@@ -86,6 +86,10 @@ name: Deploy staging
 
 on:
   workflow_dispatch:
+    inputs:
+      build_cache:
+        description: 'Which build should be used for deployment?'
+        required: false
   push:
     branches:
       - staging
@@ -100,6 +104,7 @@ jobs:
       deploy_host: 'project-name.byinfinum.co'
       deploy_user: 'js-project-name'
       deploy_port: 22
+      build_cache: ${{ github.event_name == 'workflow_dispatch' && inputs.build_cache || '' }}
     secrets:
       ADDITIONAL_VARIABLES: '{}'
       SSH_PRIVATE_KEY: ${{ secrets.STAGING_KEY }}
