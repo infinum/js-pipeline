@@ -40,6 +40,11 @@ inputs:
     required: false
     description: 'Defines whether to artifact the build'
 
+  npm_build_vars:
+    required: false
+    description: 'Environment variables to add to npm run build'
+    default: NEXT_TELEMETRY_DISABLED=1
+
   secrets:
     required: false
     description: 'Secrets vault to be used'
@@ -143,7 +148,7 @@ runs:
     - name: Run build
       shell: bash
       id: 'build'
-      run: 'NEXT_TELEMETRY_DISABLED=1 npm run build'
+      run: '${{ inputs.npm_build_vars }} npm run build'
 
     - name: Prepare Next.js standalone
       if: ${{ inputs.framework == 'next' && inputs.ssr }}

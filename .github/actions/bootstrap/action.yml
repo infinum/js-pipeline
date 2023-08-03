@@ -28,6 +28,10 @@ inputs:
     required: false
     description: 'Additional environment variables set in the workflow (in the JSON format)'
 
+  ci_flags:
+    required: false
+    description: 'Flags npm ci command will use, same as npm install flags for package-lock.json generation'
+
 runs:
   using: 'composite'
   steps:
@@ -81,6 +85,6 @@ runs:
         if [ "${{ inputs.package_manager }}" == "yarn" ]; then
           yarn install --frozen-lockfile
         else
-          npm ci
+          npm ci ${{ inputs.ci_flags }}
           npm cache verify
         fi
