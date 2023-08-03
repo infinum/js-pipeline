@@ -155,7 +155,7 @@ runs:
       shell: bash
       run: |
         if [ -f bin/build_artifact.sh ]; then
-          bash bin/build_artifact.sh
+          bash bin/build_artifact.sh ${{ inputs.newrelic }} ${{ inputs.environment }}
         else
           mv ./.next/standalone/server.js ./.next/standalone/index.js
           cp -r ./public .next/standalone
