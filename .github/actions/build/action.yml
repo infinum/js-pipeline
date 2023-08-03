@@ -154,13 +154,17 @@ runs:
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
       shell: bash
       run: |
-        mv ./.next/standalone/server.js ./.next/standalone/index.js
-        cp -r ./public .next/standalone
-        cp -r ./.next/static ./.next/standalone/.next
-        cp ./next.config.js ./.next/standalone/next.config.js
-        cp ./.node-version  ./.next/standalone/.node-version
-        if ${{ inputs.newrelic }}; then
-          cp ./newrelic.js ./.next/standalone/newrelic.js
+        if [ -f bin/build_artifact.sh ]; then
+          bash bin/build_artifact.sh
+        else
+          mv ./.next/standalone/server.js ./.next/standalone/index.js
+          cp -r ./public .next/standalone
+          cp -r ./.next/static ./.next/standalone/.next
+          cp ./next.config.js ./.next/standalone/next.config.js
+          cp ./.node-version  ./.next/standalone/.node-version
+          if ${{ inputs.newrelic }}; then
+            cp ./newrelic.js ./.next/standalone/newrelic.js
+          fi
         fi
 
     - name: Check file existence
