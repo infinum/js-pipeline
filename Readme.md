@@ -44,6 +44,8 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | `build_cache` | Short commit hash for deployment without a build. Copied from the end of the cache name. | `deploy` | false | ` ` |
 | `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |
 | `project_icon` | Icon to use for the notification | `deploy` | false | JS duck |
+| `npm_build_vars` | Environment variables to add to npm run build | `build, deploy` | false | `NEXT_TELEMETRY_DISABLED=1` |
+| `ci_flags` | Flags npm ci command will use, same as npm install flags for package-lock.json generation | `build, deploy` | false | ` ` |
 
 
 ### Secrets
