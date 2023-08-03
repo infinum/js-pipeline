@@ -86,6 +86,15 @@ on:
         required: true
         type: string
 
+      ci_flags:
+        required: false
+        type: string
+
+      npm_build_vars:
+        required: false
+        type: string
+        default: 'NEXT_TELEMETRY_DISABLED=1'
+
       # Secrets vault to be used
       secrets:
         required: false
@@ -189,6 +198,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - id: export_variables
         run: |
@@ -229,6 +239,7 @@ jobs:
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ env.OUTPUT_DIST_PATH }}
+          npm_build_vars: ${{ inputs.npm_build_vars }}
           artifact_path: ${{ env.OUTPUT_ARTIFACT_PATH }}
           use_artifact: ${{ inputs.use_artifact == 'true' }}
           ci_steps: ${{ inputs.ci_steps }}
@@ -258,6 +269,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Run lint
         shell: bash
@@ -284,6 +296,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Run test
         shell: bash
@@ -311,6 +324,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Test Coverage
         id: testCoverage

@@ -43,7 +43,6 @@ inputs:
   npm_build_vars:
     required: false
     description: 'Environment variables to add to npm run build'
-    default: NEXT_TELEMETRY_DISABLED=1
 
   secrets:
     required: false
