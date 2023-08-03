@@ -190,7 +190,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ${{ inputs.dist_path }}
-        key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+        key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
 
     - name: Prepare artifact for Next.js
       shell: bash

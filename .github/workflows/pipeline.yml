@@ -376,15 +376,14 @@ jobs:
         id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
-          key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+          key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
 
       - name: Restore the previous build from cache
         uses: actions/cache/restore@v3
         if: ${{ inputs.use_artifact == 'false' && inputs.build_cache != '' }}
-        id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
-          key: ${{ runner.os }}-build-${{ inputs.build_cache }}
+          key: ${{ inputs.environment }}-build-${{ inputs.build_cache }}
 
       - name: Restore the build from artifact
         uses: actions/download-artifact@v3
