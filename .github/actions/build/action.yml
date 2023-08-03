@@ -147,7 +147,12 @@ runs:
     - name: Run build
       shell: bash
       id: 'build'
-      run: '${{ inputs.npm_build_vars }} npm run build'
+      run: |
+        if [ "${{ inputs.npm_build_vars }}" != "" ]; then
+          ${{ inputs.npm_build_vars }} npm run build
+        else
+          NEXT_TELEMETRY_DISABLED=1 npm run build
+        fi
 
     - name: Prepare Next.js standalone
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
@@ -190,7 +195,7 @@ runs:
       uses: actions/cache@v3
       with:
         path: ${{ inputs.dist_path }}
-        key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
+        key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
 
     - name: Prepare artifact for Next.js
       shell: bash

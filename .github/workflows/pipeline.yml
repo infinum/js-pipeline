@@ -93,7 +93,6 @@ on:
       npm_build_vars:
         required: false
         type: string
-        default: 'NEXT_TELEMETRY_DISABLED=1'
 
       # Secrets vault to be used
       secrets:

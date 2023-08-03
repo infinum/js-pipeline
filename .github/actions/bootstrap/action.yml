@@ -89,6 +89,10 @@ runs:
         if [ "${{ inputs.package_manager }}" == "yarn" ]; then
           yarn install --frozen-lockfile
         else
-          npm ci ${{ inputs.ci_flags }}
+          if [ "${{ inputs.ci_flags }}" != "" ]; then
+            npm ci ${{ inputs.ci_flags }}
+          else
+            npm ci
+          fi
           npm cache verify
         fi
