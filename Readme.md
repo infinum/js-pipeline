@@ -42,6 +42,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
 | `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
 | `build_cache` | Short commit hash for deployment without a build. Copied from the end of the cache name. | `deploy` | false | ` ` |
+| `cache_build` | Defines whether to cache the build if deployment wasnt defined. | `build` | false | ` ` |
 | `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |
 | `project_icon` | Icon to use for the notification | `deploy` | false | JS duck |
 | `npm_build_vars` | Environment variables to add to npm run build | `build, deploy` | false | `NEXT_TELEMETRY_DISABLED=1` |
