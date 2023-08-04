@@ -5,9 +5,9 @@ runs:
   using: 'composite'
   steps:
     - name: Git checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@feature/deploy-cache
     - name: Download build artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@feature/deploy-cache
       with:
         name: 'build'
         path: .next

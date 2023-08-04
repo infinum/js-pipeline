@@ -74,7 +74,7 @@ on:
 jobs:
   test-analyze:
     name: 'Run'
-    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@v3
+    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@feature/deploy-cache
     with:
       ci_steps: 'lint test analyze'
       workflow: '.github/workflows/pr.yml'
@@ -100,7 +100,7 @@ on:
 jobs:
   deploy:
     name: 'Deploy'
-    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@v3
+    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@feature/deploy-cache
     with:
       ci_steps: 'deploy'
       secrets: 'js-my-project'

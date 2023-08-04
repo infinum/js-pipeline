@@ -163,10 +163,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -176,7 +176,7 @@ jobs:
           dist_path: ${{ inputs.dist_path }}
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -193,10 +193,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -205,7 +205,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
 
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@v3
+        uses: infinum/js-pipeline/.github/actions/build@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -251,10 +251,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -263,7 +263,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -284,10 +284,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -296,7 +296,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -318,10 +318,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -330,7 +330,7 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -355,9 +355,9 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@v3
+        uses: infinum/js-pipeline/.github/actions/analyze@feature/deploy-cache
         with:
           workflow: ${{ inputs.workflow }}

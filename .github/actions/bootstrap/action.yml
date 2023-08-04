@@ -51,14 +51,14 @@ runs:
           exit 1
         fi
     - name: Git checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@feature/deploy-cache
     - name: 'Set up Node.js'
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@feature/deploy-cache
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: '.node-version'
     - name: Cache node modules for Next.js
-      uses: actions/cache@v3
+      uses: actions/cache@feature/deploy-cache
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
       with:
         path: |
@@ -74,7 +74,7 @@ runs:
       shell: bash
       run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
     - name: Cache node modules for other
-      uses: actions/cache@v3
+      uses: actions/cache@feature/deploy-cache
       if: ${{ inputs.framework != 'next' }}
       id: npm-cache # use this to check for `cache-hit` ==> if: steps.npm-cache.outputs.cache-hit != 'true'
       with:

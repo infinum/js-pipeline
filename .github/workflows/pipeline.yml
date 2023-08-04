@@ -177,10 +177,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -190,7 +190,7 @@ jobs:
           dist_path: ${{ inputs.dist_path }}
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
@@ -223,10 +223,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@v3
+        uses: infinum/js-pipeline/.github/actions/build@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
@@ -258,10 +258,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
@@ -285,10 +285,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
@@ -313,10 +313,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
@@ -341,10 +341,10 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@v3
+        uses: infinum/js-pipeline/.github/actions/analyze@feature/deploy-cache
         with:
           workflow: ${{ inputs.workflow }}
 
@@ -363,14 +363,14 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@feature/deploy-cache
 
       - id: commit
         uses: pr-mpt/actions-commit-hash@v2
 
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@feature/deploy-cache
         if: ${{ inputs.use_artifact == 'false' && inputs.build_cache == '' }}
         id: restore-build-cache
         with:
@@ -378,14 +378,14 @@ jobs:
           key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
 
       - name: Restore the previous build from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@feature/deploy-cache
         if: ${{ inputs.use_artifact == 'false' && inputs.build_cache != '' }}
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
           key: ${{ inputs.environment }}-build-${{ inputs.build_cache }}
 
       - name: Restore the build from artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@feature/deploy-cache
         if: ${{ inputs.use_artifact == 'true' }}
         id: restore-build-artifact
         with:

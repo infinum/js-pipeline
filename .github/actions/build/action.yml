@@ -104,10 +104,10 @@ runs:
         fi
 
     - name: Git checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@feature/deploy-cache
 
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+      uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
       with:
         runner: ${{ inputs.runner }}
         package_manager: ${{ inputs.package_manager }}
@@ -192,7 +192,7 @@ runs:
     - name: Cache the build
       id: cache-build
       if: ${{ inputs.use_artifact == 'false' && contains(inputs.ci_steps, 'deploy') }}
-      uses: actions/cache@v3
+      uses: actions/cache@feature/deploy-cache
       with:
         path: ${{ inputs.dist_path }}
         key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
@@ -205,7 +205,7 @@ runs:
 
     - name: Upload artifacts for Next.js - Artifact Path
       if: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@feature/deploy-cache
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.artifact_path }}
@@ -213,7 +213,7 @@ runs:
 
     - name: Upload artifacts for Next.js - Dist Path
       if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@feature/deploy-cache
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
         path: ${{ inputs.dist_path }}
@@ -221,7 +221,7 @@ runs:
 
     - name: Generic upload artifacts
       if: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact == 'true' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@feature/deploy-cache
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.dist_path }}
