@@ -32,6 +32,10 @@ inputs:
     required: false
     description: 'Flags npm ci command will use, same as npm install flags for package-lock.json generation'
 
+  environment:
+    required: false
+    description: 'Environment to be used'
+
 runs:
   using: 'composite'
   steps:
@@ -61,10 +65,10 @@ runs:
           ~/.npm
           ${{ github.workspace }}/.next/cache
         # Generate a new cache whenever packages or source files change.
-        key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+        key: ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
         # If source files changed but packages didn't, rebuild from a prior cache.
         restore-keys: |
-          ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-
+          ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-
     - name: Get npm cache directory
       id: npm-cache-dir
       shell: bash
@@ -76,15 +80,19 @@ runs:
       with:
         path: ${{ steps.npm-cache-dir.outputs.dir }}
         # Generate a new cache whenever packages or source files change.
-        key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}
+        key: ${{ inputs.environment }}-npm-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}
         restore-keys: |
-          ${{ runner.os }}-npm-
+          ${{ inputs.environment }}-npm-
     - name: Install JS packages
       shell: bash
       run: |
         if [ "${{ inputs.package_manager }}" == "yarn" ]; then
           yarn install --frozen-lockfile
         else
-          npm ci ${{ inputs.ci_flags }}
+          if [ "${{ inputs.ci_flags }}" != "" ]; then
+            npm ci ${{ inputs.ci_flags }}
+          else
+            npm ci
+          fi
           npm cache verify
         fi

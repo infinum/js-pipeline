@@ -86,6 +86,14 @@ on:
         required: true
         type: string
 
+      ci_flags:
+        required: false
+        type: string
+
+      npm_build_vars:
+        required: false
+        type: string
+
       # Secrets vault to be used
       secrets:
         required: false
@@ -172,7 +180,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Detect env
-        uses: infinum/js-pipeline/.github/actions/detect-env@v3
+        uses: infinum/js-pipeline/.github/actions/detect-env@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ inputs.framework }}
@@ -182,13 +190,14 @@ jobs:
           dist_path: ${{ inputs.dist_path }}
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.package_manager }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - id: export_variables
         run: |
@@ -217,7 +226,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build
-        uses: infinum/js-pipeline/.github/actions/build@v3
+        uses: infinum/js-pipeline/.github/actions/build@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
@@ -229,6 +238,7 @@ jobs:
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ env.OUTPUT_DIST_PATH }}
+          npm_build_vars: ${{ inputs.npm_build_vars }}
           artifact_path: ${{ env.OUTPUT_ARTIFACT_PATH }}
           use_artifact: ${{ inputs.use_artifact == 'true' }}
           ci_steps: ${{ inputs.ci_steps }}
@@ -251,13 +261,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Run lint
         shell: bash
@@ -277,13 +288,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Run test
         shell: bash
@@ -304,13 +316,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+        uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
         with:
           runner: ${{ inputs.runner }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Test Coverage
         id: testCoverage
@@ -331,7 +344,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@v3
+        uses: infinum/js-pipeline/.github/actions/analyze@feature/deploy-cache
         with:
           workflow: ${{ inputs.workflow }}
 
@@ -362,15 +375,14 @@ jobs:
         id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
-          key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+          key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
 
       - name: Restore the previous build from cache
         uses: actions/cache/restore@v3
         if: ${{ inputs.use_artifact == 'false' && inputs.build_cache != '' }}
-        id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
-          key: ${{ runner.os }}-build-${{ inputs.build_cache }}
+          key: ${{ inputs.environment }}-build-${{ inputs.build_cache }}
 
       - name: Restore the build from artifact
         uses: actions/download-artifact@v3

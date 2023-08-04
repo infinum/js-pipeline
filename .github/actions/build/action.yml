@@ -43,7 +43,6 @@ inputs:
   npm_build_vars:
     required: false
     description: 'Environment variables to add to npm run build'
-    default: NEXT_TELEMETRY_DISABLED=1
 
   secrets:
     required: false
@@ -108,7 +107,7 @@ runs:
       uses: actions/checkout@v3
 
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+      uses: infinum/js-pipeline/.github/actions/bootstrap@feature/deploy-cache
       with:
         runner: ${{ inputs.runner }}
         package_manager: ${{ inputs.package_manager }}
@@ -148,7 +147,12 @@ runs:
     - name: Run build
       shell: bash
       id: 'build'
-      run: '${{ inputs.npm_build_vars }} npm run build'
+      run: |
+        if [ "${{ inputs.npm_build_vars }}" != "" ]; then
+          ${{ inputs.npm_build_vars }} npm run build
+        else
+          NEXT_TELEMETRY_DISABLED=1 npm run build
+        fi
 
     - name: Prepare Next.js standalone
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
