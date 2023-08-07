@@ -111,7 +111,7 @@ runs:
       uses: actions/checkout@v3
 
     - name: 'Bootstrap up the Node.js environment'
-      uses: infinum/js-pipeline/.github/actions/bootstrap@v3
+      uses: infinum/js-pipeline/.github/actions/bootstrap@v4
       with:
         runner: ${{ inputs.runner }}
         package_manager: ${{ inputs.package_manager }}
