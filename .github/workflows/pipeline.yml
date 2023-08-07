@@ -49,6 +49,16 @@ on:
         type: string
         default: "false"
 
+      # Short SHA of build to deploy
+      build_cache:
+        required: false
+        type: string
+
+      # Should the build be cached if deployment isnt defined, true/false
+      cache_build:
+        required: false
+        type: string
+
       # should generally be left undefined - it will default to the `.node-version` file in the root of the project
       node_version:
         required: false
@@ -80,6 +90,14 @@ on:
       #   - 'deploy'
       ci_steps:
         required: true
+        type: string
+
+      ci_flags:
+        required: false
+        type: string
+
+      npm_build_vars:
+        required: false
         type: string
 
       # Secrets vault to be used
@@ -185,6 +203,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.framework }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - id: export_variables
         run: |
@@ -198,7 +217,7 @@ jobs:
   build:
     needs: [setup]
     name: 'Build'
-    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy') }}
+    if: ${{ contains(inputs.ci_steps, 'build') || contains(inputs.ci_steps, 'analyze') || contains(inputs.ci_steps, 'deploy') && inputs.build_cache == '' }}
     runs-on: ${{ inputs.runner }}
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
@@ -225,8 +244,10 @@ jobs:
           secrets: ${{ inputs.secrets }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ env.OUTPUT_DIST_PATH }}
+          npm_build_vars: ${{ inputs.npm_build_vars }}
           artifact_path: ${{ env.OUTPUT_ARTIFACT_PATH }}
           use_artifact: ${{ inputs.use_artifact == 'true' }}
+          cache_build: ${{ inputs.cache_build == 'true' }}
           ci_steps: ${{ inputs.ci_steps }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
@@ -254,6 +275,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Run lint
         shell: bash
@@ -280,6 +302,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Run test
         shell: bash
@@ -307,6 +330,7 @@ jobs:
           node_version: ${{ inputs.node_version }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          ci_flags: ${{ inputs.ci_flags }}
 
       - name: Test Coverage
         id: testCoverage
@@ -334,7 +358,7 @@ jobs:
   deploy:
     needs: [setup, build]
     name: 'Deploy the application'
-    if: ${{ contains(inputs.ci_steps, 'deploy') }}
+    if: ${{ always() && inputs.build_cache != '' || contains(inputs.ci_steps, 'deploy') }}
     runs-on: ${{ inputs.runner }}
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
@@ -354,11 +378,18 @@ jobs:
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
         uses: actions/cache/restore@v3
-        if: ${{ inputs.use_artifact == 'false' }}
+        if: ${{ inputs.use_artifact == 'false' && inputs.build_cache == '' }}
         id: restore-build-cache
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
-          key: ${{ runner.os }}-build-${{ steps.commit.outputs.short }}
+          key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
+
+      - name: Restore the previous build from cache
+        uses: actions/cache/restore@v3
+        if: ${{ inputs.use_artifact == 'false' && inputs.build_cache != '' }}
+        with:
+          path: ${{ env.OUTPUT_DIST_PATH }}
+          key: ${{ inputs.environment }}-build-${{ inputs.build_cache }}
 
       - name: Restore the build from artifact
         uses: actions/download-artifact@v3

@@ -41,8 +41,12 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | `dist_path` | Path to build folder | `build, deploy` | false | `./dist/*` |
 | `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
 | `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
+| `build_cache` | Short commit hash for deployment without a build. Copied from the end of the cache name. | `deploy` | false | ` ` |
+| `cache_build` | Defines whether to cache the build if deployment wasnt defined. | `build` | false | ` ` |
 | `notify_on` | When to send notifications. Possible values are `success`, `failure` and `all` | `deploy` | false | `all` |
 | `project_icon` | Icon to use for the notification | `deploy` | false | JS duck |
+| `npm_build_vars` | Environment variables to add to npm run build | `build, deploy` | false | `NEXT_TELEMETRY_DISABLED=1` |
+| `ci_flags` | Flags npm ci command will use, same as npm install flags for package-lock.json generation | `build, deploy` | false | ` ` |
 
 
 ### Secrets
@@ -86,6 +90,10 @@ name: Deploy staging
 
 on:
   workflow_dispatch:
+    inputs:
+      build_cache:
+        description: 'Which build should be used for deployment?'
+        required: false
   push:
     branches:
       - staging
@@ -100,6 +108,7 @@ jobs:
       deploy_host: 'project-name.byinfinum.co'
       deploy_user: 'js-project-name'
       deploy_port: 22
+      build_cache: ${{ github.event_name == 'workflow_dispatch' && inputs.build_cache || '' }}
     secrets:
       ADDITIONAL_VARIABLES: '{}'
       SSH_PRIVATE_KEY: ${{ secrets.STAGING_KEY }}
