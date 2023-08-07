@@ -52,7 +52,7 @@ runs:
     - name: Detect SSR
       shell: bash
       run: |
-        if ${{ inputs.ssr != '' }}; then
+        if ${{ inputs.ssr }}; then
           echo "ssr=${{ inputs.ssr }}" >> $GITHUB_ENV
         elif [ -f next.config.js ]; then
           echo "ssr=true" >> $GITHUB_ENV
@@ -74,7 +74,7 @@ runs:
     - name: Detect tooling
       shell: bash
       run: |
-        if ${{ inputs.newrelic != '' }}; then
+        if ${{ inputs.newrelic }}; then
           echo "newrelic=${{ inputs.newrelic }}" >> $GITHUB_ENV
         elif [ -f newrelic.js ]; then
           echo "newrelic=true" >> $GITHUB_ENV

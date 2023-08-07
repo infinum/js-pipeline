@@ -35,6 +35,7 @@ on:
       ssr:
         required: false
         type: boolean
+        default: false
 
       # Should npm or yarn be used to install dependencies?
       # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
@@ -108,6 +109,7 @@ on:
       newrelic:
         required: false
         type: boolean
+        default: false
 
       # The workflow that is used for bundle analysis
       workflow:
