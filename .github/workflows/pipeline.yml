@@ -197,16 +197,6 @@ jobs:
           newrelic: ${{ inputs.newrelic }}
           dist_path: ${{ inputs.dist_path }}
 
-      - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v4
-        with:
-          runner: ${{ inputs.runner }}
-          package_manager: ${{ env.package_manager }}
-          node_version: ${{ inputs.node_version }}
-          framework: ${{ env.framework }}
-          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          ci_flags: ${{ inputs.ci_flags }}
-
       - id: export_variables
         run: |
           echo "framework=${{ env.framework }}" >> "$GITHUB_OUTPUT"
