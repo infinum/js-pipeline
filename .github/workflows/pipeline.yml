@@ -369,6 +369,8 @@ jobs:
       OUTPUT_NEWRELIC: ${{ needs.setup.outputs.output_newrelic }}
       OUTPUT_DIST_PATH: ${{ needs.setup.outputs.output_dist_path }}
       OUTPUT_ARTIFACT_PATH: ${{ needs.setup.outputs.output_artifact_path }}
+    outputs:
+      build_cache: ${{ steps.commit.outputs.short }}
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
