@@ -401,7 +401,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ inputs.deploy_port }}
           script: |
-            mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+            mkdir -p ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/releases/${{ steps.commit.outputs.short }}
 
       - name: Copy deployment for Next.js
         if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
@@ -435,7 +435,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ inputs.deploy_port }}
           script: |
-            cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+            cd ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/releases/${{ steps.commit.outputs.short }}
 
       - name: Deploy the release
         uses: appleboy/ssh-action@v0.1.6
@@ -452,9 +452,9 @@ jobs:
             if ${{ env.OUTPUT_NEWRELIC }}
             then
               npm install @newrelic/next
-              NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+              NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
             else
-              passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+              passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
             fi
 
       - name: Clean up failed release
@@ -468,7 +468,7 @@ jobs:
           script: |
            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
-           passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+           passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
 
       - name: Clean up release folder
         uses: appleboy/ssh-action@v0.1.6
