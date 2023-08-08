@@ -350,7 +350,7 @@ jobs:
   deploy:
     needs: [setup, build]
     name: 'Deploy the application'
-    if: ${{ always() && inputs.build_cache != '' || contains(inputs.ci_steps, 'deploy') }}
+    if: ${{ always() && inputs.build_cache != '' || contains(inputs.ci_steps, 'deploy') && needs.build.result != 'success' }}
     runs-on: ${{ inputs.runner }}
     env:
       OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
