@@ -409,7 +409,7 @@ jobs:
         with:
           switches: -avzr
           path: ${{ env.OUTPUT_DIST_PATH }}
-          remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
+          remote_path: ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
@@ -421,7 +421,7 @@ jobs:
         with:
           switches: -avzr
           path: ${{ env.OUTPUT_DIST_PATH }}
-          remote_path: /home/${{ inputs.deploy_user }}/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
+          remote_path: ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/${{ steps.commit.outputs.short }}/
           remote_host: ${{ inputs.deploy_host }}
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
