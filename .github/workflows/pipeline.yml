@@ -171,6 +171,11 @@ on:
       ADDITIONAL_VARIABLES:
         required: false
 
+    outputs:
+      build_cache:
+        description: "Build cache short SHA"
+        value: ${{ jobs.deploy.outputs.build_cache }}
+
 jobs:
   setup:
     name: 'Environment setup'
