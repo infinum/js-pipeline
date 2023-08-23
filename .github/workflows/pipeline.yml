@@ -146,6 +146,11 @@ on:
         type: number
         default: 10
 
+      # If not using passenger and the app is configured as a node systemd service to be restarted
+      node_service:
+        required: false
+        type: string
+
     secrets:
       VAULT_ADDR:
         required: false
@@ -458,6 +463,8 @@ jobs:
             then
               npm install @newrelic/next
               NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
+            elif ${{ inputs.node_service != "" }}
+              sudo systemctl restart ${{ inputs.node_service }}
             else
               passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
             fi
@@ -471,9 +478,14 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ inputs.deploy_port }}
           script: |
-           cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
-           cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
-           passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
+            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
+            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
+            if ${{ inputs.node_service != "" }}
+            then
+              sudo systemctl restart ${{ inputs.node_service }}
+            else
+              passenger-config restart-app --ignore-app-not-running ~/www/$(cut -d "/" -f5 <<< ${{ inputs.deploy_to }})/current
+            fi
 
       - name: Clean up release folder
         uses: appleboy/ssh-action@v0.1.6
