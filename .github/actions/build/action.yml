@@ -182,7 +182,7 @@ runs:
         files: ".node-version"
 
     - name: Prepare other node builds
-      if: steps.check_node_version.outputs.files_exists
+      if: ${{ steps.check_node_version.outputs.files_exists && inputs.dist_path != './' }}
       shell: bash
       run: |
         cp ./.node-version  ./${{ inputs.dist_path }}/.node-version
