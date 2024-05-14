@@ -179,8 +179,14 @@ jobs:
           runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
           delta: 0.5
 
+      - name: Log inputs
+        run: |
+            echo "Docker: ${{ inputs.docker }}"
+            echo "CI Steps: ${{ inputs.ci_steps }}"
+
+
       - name: 'Analyze the bundle'
-        if: ${{ contains(inputs.ci_steps, 'analyze') }} && ${{ !inputs.docker }}
+        if: ${{ contains(inputs.ci_steps, 'analyze') && !inputs.docker }}
         uses: infinum/js-pipeline/.github/actions/analyze@v4
         with:
           workflow: ${{ inputs.workflow }}
