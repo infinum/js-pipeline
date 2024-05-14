@@ -133,6 +133,7 @@ jobs:
           echo "package_manager=${{ env.package_manager }}" >> "$GITHUB_OUTPUT"
           echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
           echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
+          echo "artifact_path=${{ env.artifact_path }}" >> "$GITHUB_OUTPUT"
 
       - name: Build
         uses: infinum/js-pipeline/.github/actions/build@v4
@@ -148,6 +149,7 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ env.dist_path }}
           npm_build_vars: ${{ inputs.npm_build_vars }}
+          artifact_path: ${{ env.artifact_path }}
           use_artifact: ${{ inputs.use_artifact == 'true' && !inputs.docker }}
           cache_build: ${{ inputs.cache_build == 'true' }}
           ci_steps: ${{ inputs.ci_steps }}
