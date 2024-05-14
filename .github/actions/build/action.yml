@@ -208,7 +208,7 @@ runs:
       run: 'rm -rf .next/cache'
 
     - name: Upload artifacts for Next.js - Artifact Path
-      if: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') }}
+      if: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') && inputs.use_artifact == 'true' }}
       uses: actions/upload-artifact@v3
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'

@@ -133,7 +133,6 @@ jobs:
           echo "package_manager=${{ env.package_manager }}" >> "$GITHUB_OUTPUT"
           echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
           echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
-          echo "artifact_path=${{ env.artifact_path }}" >> "$GITHUB_OUTPUT"
 
       - name: Build
         uses: infinum/js-pipeline/.github/actions/build@v4
@@ -157,19 +156,19 @@ jobs:
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
 
-      - name: Run lint
+      - name: 'Run lint'
         if: ${{ contains(inputs.ci_steps, 'lint') }}
         shell: bash
         id: 'lint'
         run: 'npm run lint'
 
-      - name: Run test
+      - name: 'Run test'
         if: ${{ contains(inputs.ci_steps, 'test') }}
         shell: bash
         id: 'test'
         run: 'npm run test'
 
-      - name: Test Coverage
+      - name: 'Run tests with coverage'
         if: ${{ contains(inputs.ci_steps, 'jest') }}
         id: testCoverage
         uses: anuraag016/Jest-Coverage-Diff@master
