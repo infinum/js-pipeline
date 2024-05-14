@@ -148,7 +148,7 @@ jobs:
           env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
           dist_path: ${{ env.dist_path }}
           npm_build_vars: ${{ inputs.npm_build_vars }}
-          use_artifact: ${{ inputs.use_artifact == 'false' }}
+          use_artifact: ${{ inputs.use_artifact == 'true' && !inputs.docker }}
           cache_build: ${{ inputs.cache_build == 'true' }}
           ci_steps: ${{ inputs.ci_steps }}
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
