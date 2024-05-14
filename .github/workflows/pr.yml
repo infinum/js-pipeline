@@ -1,0 +1,185 @@
+name: Build workflow
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_call:
+    inputs:
+      # Selects the runner on which the workflow will run
+      # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
+      runner:
+        required: false
+        type: string
+        default: ubuntu-latest
+
+      # Used for accessing environment specific secrets vault and Slack integration messages
+      environment:
+        required: true
+        type: string
+
+      # React, Next, Angular or Node
+      # if not defined:
+      # * use angular if angular.json is present
+      # * use next if next.config.js is present
+      # * otherwise use react
+      framework:
+        required: false
+        type: string
+
+      # Server-side rendering or client-side rendering
+      # if not defined:
+      # * use ssr if next.config.js is present
+      # * otherwise use csr
+      ssr:
+        required: false
+        type: boolean
+        default: false
+
+      # Should npm or yarn be used to install dependencies?
+      # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
+      package_manager:
+        required: false
+        type: string
+
+      # Define is build should upload an artifact
+      # If left false, cache will be used for deploy
+      use_artifact:
+        required: false
+        type: string
+        default: "false"
+
+      # Short SHA of build to deploy
+      build_cache:
+        required: false
+        type: string
+
+      # Should the build be cached if deployment isnt defined, true/false
+      cache_build:
+        required: false
+        type: string
+
+      ci_steps:
+        required: true
+        type: string
+
+      npm_build_vars:
+        required: false
+        type: string
+
+      # Secrets vault to be used
+      secrets:
+        required: false
+        type: string
+
+      newrelic:
+        required: false
+        type: boolean
+        default: false
+
+      # The workflow that is used for bundle analysis
+      workflow:
+        required: false
+        type: string
+
+      # Define if this is a containerized setup or not. Analyze step will be skiped as there is no build bundle to compare to - build is done within the container
+      docker:
+        required: false
+        type: boolean
+        default: false
+
+      timeout_minutes:
+        required: false
+        type: number
+        default: 10
+
+    secrets:
+      VAULT_ADDR:
+        required: false
+
+      VAULT_AUTH_METHOD:
+        required: false
+
+      VAULT_AUTH_ROLE_ID:
+        required: false
+
+      VAULT_AUTH_SECRET_ID:
+        required: false
+
+jobs:
+  test-on-pr:
+    name: 'Lint, test and analyze'
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v5
+
+      - name: Detect env
+        uses: infinum/js-pipeline/.github/actions/detect-env@v4
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ inputs.framework }}
+          ssr: ${{ inputs.ssr }}
+          package_manager: ${{ inputs.package_manager }}
+          newrelic: ${{ inputs.newrelic }}
+          dist_path: ${{ inputs.dist_path }}
+
+      - id: export_variables
+        run: |
+          echo "framework=${{ env.framework }}" >> "$GITHUB_OUTPUT"
+          echo "ssr=${{ env.ssr }}" >> "$GITHUB_OUTPUT"
+          echo "package_manager=${{ env.package_manager }}" >> "$GITHUB_OUTPUT"
+          echo "newrelic=${{ env.newrelic }}" >> "$GITHUB_OUTPUT"
+          echo "dist_path=${{ env.dist_path }}" >> "$GITHUB_OUTPUT"
+          echo "artifact_path=${{ env.artifact_path }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        uses: infinum/js-pipeline/.github/actions/build@v4
+        with:
+          runner: ${{ inputs.runner }}
+          framework: ${{ env.framework }}
+          ssr: ${{ env.ssr }}
+          package_manager: ${{ env.package_manager }}
+          node_version: ${{ inputs.node_version }}
+          newrelic: ${{ env.newrelic }}
+          environment: ${{ inputs.environment }}
+          secrets: ${{ inputs.secrets }}
+          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
+          dist_path: ${{ env.dist_path }}
+          npm_build_vars: ${{ inputs.npm_build_vars }}
+          use_artifact: ${{ inputs.use_artifact == 'false' }}
+          cache_build: ${{ inputs.cache_build == 'true' }}
+          ci_steps: ${{ inputs.ci_steps }}
+          VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
+          VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
+          VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+          VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
+
+      - name: Run lint
+        if: ${{ contains(inputs.ci_steps, 'lint') }}
+        shell: bash
+        id: 'lint'
+        run: 'npm run lint'
+
+      - name: Run test
+        if: ${{ contains(inputs.ci_steps, 'test') }}
+        shell: bash
+        id: 'test'
+        run: 'npm run test'
+
+      - name: Test Coverage
+        if: ${{ contains(inputs.ci_steps, 'jest') }}
+        id: testCoverage
+        uses: anuraag016/Jest-Coverage-Diff@master
+        with:
+          fullCoverageDiff: false
+          runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
+          delta: 0.5
+
+      - name: 'Analyze the bundle'
+        if: ${{ contains(inputs.ci_steps, 'analyze') }} && ${{ !inputs.docker }}
+        uses: infinum/js-pipeline/.github/actions/analyze@v4
+        with:
+          workflow: ${{ inputs.workflow }}
