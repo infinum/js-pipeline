@@ -1,4 +1,4 @@
-name: Build workflow
+name: Pr check
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -178,12 +178,6 @@ jobs:
           fullCoverageDiff: false
           runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
           delta: 0.5
-
-      - name: Log inputs
-        run: |
-            echo "Docker: ${{ inputs.docker }}"
-            echo "CI Steps: ${{ inputs.ci_steps }}"
-
 
       - name: 'Analyze the bundle'
         if: ${{ contains(inputs.ci_steps, 'analyze') && !inputs.docker }}
