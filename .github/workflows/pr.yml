@@ -107,6 +107,9 @@ on:
       VAULT_AUTH_SECRET_ID:
         required: false
 
+      ADDITIONAL_VARIABLES:
+        required: false
+
 jobs:
   test-on-pr:
     name: 'Lint, test and analyze'
