@@ -184,6 +184,6 @@ jobs:
 
       - name: 'Analyze the bundle'
         if: ${{ contains(inputs.ci_steps, 'analyze') && !inputs.docker }}
-        uses: infinum/js-pipeline/.github/actions/analyze@v4
+        uses: infinum/js-pipeline/.github/actions/analyze@feature/pr-pipeline
         with:
           workflow: ${{ inputs.workflow }}
