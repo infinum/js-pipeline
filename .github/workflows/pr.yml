@@ -1,4 +1,4 @@
-name: Pr check
+name: PR check
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -112,7 +112,7 @@ on:
 
 jobs:
   test-on-pr:
-    name: 'Lint, test and analyze'
+    name: 'Run PR checks'
     runs-on: ${{ inputs.runner }}
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
