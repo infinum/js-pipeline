@@ -13,12 +13,6 @@ runs:
       shell: bash
       run: npx -p nextjs-bundle-analysis report
 
-    - name: Upload bundle
-      uses: actions/upload-artifact@v2
-      with:
-        name: bundle
-        path: .next/analyze/
-
     - name: Download base branch bundle stats
       uses: dawidd6/action-download-artifact@v2
       if: success() && github.event.number
