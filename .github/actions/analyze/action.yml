@@ -5,12 +5,7 @@ runs:
   using: 'composite'
   steps:
     - name: Git checkout
-      uses: actions/checkout@v3
-    - name: Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: 'build'
-        path: .next
+      uses: actions/checkout@v4
 
     # Here's the first place where next-bundle-analysis' own script is used
     # This step pulls the raw bundle stats for the current bundle
