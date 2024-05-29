@@ -180,7 +180,7 @@ jobs:
           delta: 0.5
 
       - name: 'Analyze the bundle'
-        if: ${{ contains(inputs.ci_steps, 'analyze') && !inputs.docker }}
+        if: ${{ contains(inputs.ci_steps, 'analyze') }}
         uses: infinum/js-pipeline/.github/actions/analyze@feature/pr-pipeline
         with:
           workflow: ${{ inputs.workflow }}
