@@ -89,10 +89,6 @@ on:
       #   - 'build'
       #   - 'analyze'
       #   - 'deploy'
-      ci_steps:
-        required: true
-        type: string
-
       ci_flags:
         required: false
         type: string
@@ -110,11 +106,6 @@ on:
         required: false
         type: boolean
         default: false
-
-      # The workflow that is used for bundle analysis
-      workflow:
-        required: false
-        type: string
 
       deploy_host:
         required: false
@@ -245,107 +236,6 @@ jobs:
           VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
           VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
           VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
-
-  lint:
-    needs: [setup]
-    name: 'Lint the code'
-    if: ${{ contains(inputs.ci_steps, 'lint') }}
-    runs-on: ${{ inputs.runner }}
-    env:
-      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
-      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
-    timeout-minutes: ${{ inputs.timeout_minutes }}
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v3
-
-      - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v4
-        with:
-          runner: ${{ inputs.runner }}
-          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
-          node_version: ${{ inputs.node_version }}
-          framework: ${{ env.OUTPUT_FRAMEWORK }}
-          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          ci_flags: ${{ inputs.ci_flags }}
-
-      - name: Run lint
-        shell: bash
-        id: 'lint'
-        run: 'npm run lint'
-  test:
-    needs: [setup]
-    name: 'Run tests'
-    if: ${{ contains(inputs.ci_steps, 'test') }}
-    runs-on: ${{ inputs.runner }}
-    env:
-      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
-      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
-    timeout-minutes: ${{ inputs.timeout_minutes }}
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v3
-
-      - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v4
-        with:
-          runner: ${{ inputs.runner }}
-          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
-          node_version: ${{ inputs.node_version }}
-          framework: ${{ env.OUTPUT_FRAMEWORK }}
-          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          ci_flags: ${{ inputs.ci_flags }}
-
-      - name: Run test
-        shell: bash
-        id: 'test'
-        run: 'npm run test'
-
-  jest:
-    needs: [setup]
-    name: 'Run tests with coverage'
-    if: ${{ contains(inputs.ci_steps, 'jest') }}
-    runs-on: ${{ inputs.runner }}
-    env:
-      OUTPUT_FRAMEWORK: ${{ needs.setup.outputs.output_framework }}
-      OUTPUT_PACKAGE_MANAGER: ${{ needs.setup.outputs.output_package_manager }}
-    timeout-minutes: ${{ inputs.timeout_minutes }}
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v3
-
-      - name: 'Bootstrap up the Node.js environment'
-        uses: infinum/js-pipeline/.github/actions/bootstrap@v4
-        with:
-          runner: ${{ inputs.runner }}
-          package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
-          node_version: ${{ inputs.node_version }}
-          framework: ${{ env.OUTPUT_FRAMEWORK }}
-          env_vars: ${{ secrets.ADDITIONAL_VARIABLES }}
-          ci_flags: ${{ inputs.ci_flags }}
-
-      - name: Test Coverage
-        id: testCoverage
-        uses: anuraag016/Jest-Coverage-Diff@master
-        with:
-          fullCoverageDiff: false
-          runCommand: 'npx jest --collectCoverageFrom=''["src/**/*.{js,jsx,ts,tsx}"]'' --coverage --collectCoverage=true --coverageDirectory=''./'' --coverageReporters=''json-summary'' --forceExit --detectOpenHandles src/.*test.*'
-          delta: 0.5
-
-  analyze:
-    needs: [build]
-    name: 'Analyze the Next.js bundle size'
-    if: ${{ contains(inputs.ci_steps, 'analyze') }}
-    runs-on: ${{ inputs.runner }}
-    timeout-minutes: ${{ inputs.timeout_minutes }}
-    steps:
-      - name: Git checkout
-        uses: actions/checkout@v3
-
-      - name: 'Analyze the bundle'
-        uses: infinum/js-pipeline/.github/actions/analyze@v4
-        with:
-          workflow: ${{ inputs.workflow }}
 
   deploy:
     needs: [setup, build]

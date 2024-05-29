@@ -5,24 +5,13 @@ runs:
   using: 'composite'
   steps:
     - name: Git checkout
-      uses: actions/checkout@v3
-    - name: Download build artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: 'build'
-        path: .next
+      uses: actions/checkout@v4
 
     # Here's the first place where next-bundle-analysis' own script is used
     # This step pulls the raw bundle stats for the current bundle
     - name: Analyze bundle
       shell: bash
       run: npx -p nextjs-bundle-analysis report
-
-    - name: Upload bundle
-      uses: actions/upload-artifact@v2
-      with:
-        name: bundle
-        path: .next/analyze/
 
     - name: Download base branch bundle stats
       uses: dawidd6/action-download-artifact@v2

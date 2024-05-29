@@ -4,9 +4,6 @@
 
 | Job name | Description |
 | --- | --- |
-| `lint` | Runs `npm run lint` |
-| `test` | Runs `npm run test` |
-| `jest` | Runs Jest tests with coverage comparison (useful for PRs) |
 | `audit` | Runs `npm run audit` |
 | `build` | Builds the app |
 | `deploy` | Deploys the app |
@@ -20,8 +17,6 @@ Inputs that should be defined in the workflow file are listed bellow. They are n
 
 | property | description | Relevant jobs | required | default |
 | --- | --- | --- | --- | --- |
-| `ci_steps` | Steps to run in the workflow, as a space separated string. Possible values are in a separate section above | all | true | N/A |
-| `workflow` | Path to the current workflow file | `analyze` | false | N/A |
 | `secrets` | Name of the vault to be used | `deploy`, `build` | false | N/A |
 | `deploy_host` | Host to deploy to | `deploy` | false | N/A |
 | `deploy_user` | User to deploy as | `deploy` | false | N/A |
@@ -63,25 +58,6 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 
 ## Recipes
 
-### Example build config
-
-```yaml
-# .github/workflows/pr.yml
-name: Build
-
-on:
-  pull_request:
-
-jobs:
-  test-analyze:
-    name: 'Run'
-    uses: infinum/js-pipeline/.github/workflows/pipeline.yml@v4
-    with:
-      ci_steps: 'lint test analyze'
-      workflow: '.github/workflows/pr.yml'
-
-```
-
 ### Example deploy config
 
 ```yaml
@@ -116,6 +92,70 @@ jobs:
       VAULT_AUTH_METHOD: ${{ secrets.VAULT_AUTH_METHOD }}
       VAULT_AUTH_ROLE_ID: ${{ secrets.VAULT_AUTH_ROLE_ID }}
       VAULT_AUTH_SECRET_ID: ${{ secrets.VAULT_AUTH_SECRET_ID }}
+```
+# JS PR check Pipeline for GitHub Actions
+
+## Available jobs
+
+| Job name | Description |
+| --- | --- |
+| `lint` | Runs `npm run lint` |
+| `test` | Runs `npm run test` |
+| `jest` | Runs Jest tests with coverage comparison (useful for PRs) |
+| `analyze` | Runs a bundle analysis and comparison with the target branch (Next.js, WIP) |
+
+### Inputs
+
+Inputs that should be defined in the workflow file are listed bellow. They are not required if you're not using the job that requires them.
+
+| property | description | Relevant jobs | required | default |
+| --- | --- | --- | --- | --- |
+| `ci_steps` | Steps to run in the workflow, as a space separated string. Possible values are in a separate section above | all | true | N/A |
+| `workflow` | Path to the current workflow file | `analyze` | false | N/A |
+| `docker` | Is it a containerized build | false |
+
+Inputs that may be defined in the workflow file, but have defaults that are usually fine:
+
+| property | description | Relevant jobs | required | default |
+| --- | --- | --- | --- | --- |
+| `runner` | Runner to use for the action (OS/version). | all | false | `ubuntu-latest` |
+| `package_manager` | Package manager to use for the action. | all | false | Yarn if `yarn.lock` is present, npm otherwise |
+| `node_version` | Node.js version to use. | all | false | The one defined in `.node-version` |
+| `framework` | Project type - supported values are `angular`, `react`, `next` and `node` | all | false | `angular` if `angular.json` present in root, `next` if `next.config.js` present in root, otherwise `react` |
+| `dist_path` | Path to build folder | `build, deploy` | false | `./dist/*` |
+| `newrelic` | Should we run server-side newrelic | `deploy` | false | `true` if `newrelic.js` exists in project root, `false` otherwise |
+| `ssr` | Whether to build the app in SSR mode. | `deploy` | false | `true` if framework is next, `false` otherwise |
+| `build_cache` | Short commit hash for deployment without a build. Copied from the end of the cache name. | `deploy` | false | ` ` |
+| `cache_build` | Defines whether to cache the build if deployment wasnt defined. | `build` | false | ` ` |
+| `npm_build_vars` | Environment variables to add to npm run build | `build, deploy` | false | `NEXT_TELEMETRY_DISABLED=1` |
+
+### Secrets
+
+| property | description | required |
+| --- | --- | --- |
+| `VAULT_ADDR` | Vault URL | false |
+| `VAULT_AUTH_METHOD` | Vault auth method | false |
+| `VAULT_AUTH_ROLE_ID` | Vault auth role ID | false |
+| `VAULT_AUTH_SECRET_ID` | Vault auth secret ID | false |
+| `ADDITIONAL_VARIABLES` | Additional ENV variables to pass to the pipeline (in a serialized JSON) | false |
+
+### Example config
+
+```yaml
+name: Pr check
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  test-analyze:
+    name: 'Run'
+    uses: infinum/js-pipeline/.github/workflows/pr.yml@master
+    with:
+      ci_steps: 'lint test analyze'
+      docker: true
+      environment: 'staging'
 ```
 
 ### Other projects

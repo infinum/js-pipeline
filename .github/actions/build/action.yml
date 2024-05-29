@@ -64,10 +64,6 @@ inputs:
     required: false
     description: 'Path to dist folder. If not defined, a path based on framework will be used.'
 
-  artifact_path:
-    required: false
-    description: 'Folder that gets uploaded to artifact.'
-
   override_env_json:
     required: false
     description: 'Override env.json file'
@@ -203,17 +199,9 @@ runs:
 
     - name: Prepare artifact for Next.js
       shell: bash
-      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'analyze') || ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) ) }}
+      if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) }}
       id: 'prepare-artifact'
       run: 'rm -rf .next/cache'
-
-    - name: Upload artifacts for Next.js - Artifact Path
-      if: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') }}
-      uses: actions/upload-artifact@v3
-      with:
-        name: 'build-${{ steps.commit.outputs.short }}-artifact'
-        path: ${{ inputs.artifact_path }}
-        retention-days: 30
 
     - name: Upload artifacts for Next.js - Dist Path
       if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) }}
