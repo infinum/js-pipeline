@@ -110,6 +110,12 @@ on:
         required: false
         type: boolean
         default: false
+      
+      # If the runner is self hosted and we are deploying locally on it. For example a setup behind a VPN.  
+      self_hosted_runner:
+        required: false
+        type: boolean
+        default: false  
 
       # The workflow that is used for bundle analysis
       workflow:
@@ -393,6 +399,10 @@ jobs:
           name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
           path: ${{ env.OUTPUT_DIST_PATH }}
 
+      - name: Create release folder (local)
+        if: ${{ inputs.self_hosted_runner == 'true' }}
+        run: mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}          
+
       - name: Create release folder
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -402,6 +412,10 @@ jobs:
           port: ${{ inputs.deploy_port }}
           script: |
             mkdir -p ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+
+      - name: Copy deployment for Next.js (local)
+        if: ${{ inputs.self_hosted_runner == 'true' && env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
+        run: rsync -avzr ${{ env.OUTPUT_DIST_PATH }}/ ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/            
 
       - name: Copy deployment for Next.js
         if: ${{ env.OUTPUT_FRAMEWORK == 'next' && env.OUTPUT_SSR }}
@@ -415,6 +429,10 @@ jobs:
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      - name: Copy deployment for other (local)
+        if: ${{ inputs.self_hosted_runner == 'true' && (env.OUTPUT_FRAMEWORK != 'next' || env.OUTPUT_SSR) }}
+        run: rsync -avzr ${{ env.OUTPUT_DIST_PATH }}/ ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}/
+    
       - name: Copy deployment for other
         if: ${{ env.OUTPUT_FRAMEWORK != 'next' || env.OUTPUT_SSR }}
         uses: burnett01/rsync-deployments@5.2.1
@@ -426,6 +444,19 @@ jobs:
           remote_port: ${{ inputs.deploy_port }}
           remote_user: ${{ inputs.deploy_user }}
           remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Deploy to ${{ inputs.environment }} (local)
+        if: ${{ inputs.self_hosted_runner == 'true' }}
+        run: |
+          cd ~/www/${{ inputs.deploy_host }}/releases/${{ steps.commit.outputs.short }}
+          cd ~/www/${{ inputs.deploy_host }}/ && ln -nfs releases/${{ steps.commit.outputs.short }}/ current
+          cd current
+          if [ "${{ env.OUTPUT_NEWRELIC }}" = "true" ]; then
+            npm install @newrelic/next
+            NODE_OPTIONS='-r @newrelic/next' passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+          else
+            passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+          fi
 
       - name: Deploy to ${{ inputs.environment }}
         uses: appleboy/ssh-action@v0.1.6
@@ -457,6 +488,13 @@ jobs:
               passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
             fi
 
+      - name: Clean up failed release (local)
+        if: ${{ inputs.self_hosted_runner == 'true' && failure() }}
+        run: |
+          cd ~/www/${{ inputs.deploy_host }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
+          cd ~/www/${{ inputs.deploy_host }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
+          passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current    
+
       - name: Clean up failed release
         uses: appleboy/ssh-action@v0.1.6
         if: ${{ failure() }}
@@ -469,6 +507,11 @@ jobs:
            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/releases/ && rm -r ${{ steps.commit.outputs.short }}
            cd ${{ inputs.deploy_to || format('/home/{0}/www/{1}', inputs.deploy_user, inputs.deploy_host) }}/ && ln -nfs releases/$(ls -t releases | head -n 1)/ current
            passenger-config restart-app --ignore-app-not-running ~/www/${{ inputs.deploy_host }}/current
+
+      - name: Clean up release folder (local)
+        if: ${{ inputs.self_hosted_runner == 'true' }}
+        run: |
+          cd ~/www/${{ inputs.deploy_host }}/releases/ && ls -tl | tail -n +5 | awk '{print $9}' | xargs rm -rf           
 
       - name: Clean up release folder
         uses: appleboy/ssh-action@v0.1.6
