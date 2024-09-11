@@ -209,7 +209,7 @@ runs:
 
     - name: Upload artifacts for Next.js - Artifact Path
       if: ${{ inputs.framework == 'next' && contains(inputs.ci_steps, 'analyze') }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.artifact_path }}
@@ -217,7 +217,7 @@ runs:
 
     - name: Upload artifacts for Next.js - Dist Path
       if: ${{ inputs.framework == 'next' && ( contains(inputs.ci_steps, 'deploy') && inputs.use_artifact == 'true' ) }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
         path: ${{ inputs.dist_path }}
@@ -225,7 +225,7 @@ runs:
 
     - name: Generic upload artifacts
       if: ${{ inputs.framework != 'next' && !inputs.ssr && inputs.use_artifact == 'true' }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.dist_path }}
