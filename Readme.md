@@ -34,7 +34,7 @@ Inputs that may be defined in the workflow file, but have defaults that are usua
 | property | description | Relevant jobs | required | default |
 | --- | --- | --- | --- | --- |
 | `runner` | Runner to use for the action (OS/version). | all | false | `ubuntu-latest` |
-| `package_manager` | Package manager to use for the action. | all | false | Yarn if `yarn.lock` is present, npm otherwise |
+| `package_manager` | Package manager to use for the action. | all | false | Yarn if `yarn.lock` is present, pNPM if `pnpm-lock.yaml` is present, npm otherwise |
 | `node_version` | Node.js version to use. | all | false | The one defined in `.node-version` |
 | `framework` | Project type - supported values are `angular`, `react`, `next` and `node` | all | false | `angular` if `angular.json` present in root, `next` if `next.config.js` present in root, otherwise `react` |
 | `deploy_to` | Path where the app is deployed on the server | `deploy` | false | `/home/{{deploy_user}}/www/{{deploy_host}}` |

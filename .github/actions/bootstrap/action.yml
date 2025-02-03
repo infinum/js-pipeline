@@ -1,43 +1,43 @@
 name: Bootstrap
-description: 'Bootstrap the project'
+description: "Bootstrap the project"
 
 inputs:
   # Selects the runner on which the workflow will run
   # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#supported-runners-and-hardware-resources
   runner:
     required: false
-    description: 'Selects the runner on which the workflow will run'
+    description: "Selects the runner on which the workflow will run"
     default: ubuntu-latest
 
   # Should npm or yarn be used to install dependencies?
   # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
   package_manager:
     required: false
-    description: 'Should npm or yarn be used to install dependencies? If not defined, use npm if `package-lock.json` is present, otherwise use yarn'
+    description: "Should npm or yarn be used to install dependencies? If not defined, use npm if `package-lock.json` is present, otherwise use yarn"
 
   # should generally be left undefined - it will default to the `.node-version` file in the root of the project
   node_version:
     required: false
-    description: 'should generally be left undefined - it will default to the `.node-version` file in the root of the project'
+    description: "should generally be left undefined - it will default to the `.node-version` file in the root of the project"
 
   framework:
     required: true
-    description: 'The framework used in the project (angular, react, next, node)'
+    description: "The framework used in the project (angular, react, next, node)"
 
   env_vars:
     required: false
-    description: 'Additional environment variables set in the workflow (in the JSON format)'
+    description: "Additional environment variables set in the workflow (in the JSON format)"
 
   ci_flags:
     required: false
-    description: 'Flags npm ci command will use, same as npm install flags for package-lock.json generation'
+    description: "Flags npm ci command will use, same as npm install flags for package-lock.json generation"
 
   environment:
     required: false
-    description: 'Environment to be used'
+    description: "Environment to be used"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Set up additional environment variables
       shell: bash
@@ -52,11 +52,11 @@ runs:
         fi
     - name: Git checkout
       uses: actions/checkout@v3
-    - name: 'Set up Node.js'
+    - name: "Set up Node.js"
       uses: actions/setup-node@v3
       with:
         node-version: ${{ inputs.node_version }}
-        node-version-file: '.node-version'
+        node-version-file: ".node-version"
     - name: Cache node modules for Next.js
       uses: actions/cache@v3
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
@@ -65,10 +65,10 @@ runs:
           ~/.npm
           ${{ github.workspace }}/.next/cache
         # Generate a new cache whenever packages or source files change.
-        key: ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+        key: ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') || hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
         # If source files changed but packages didn't, rebuild from a prior cache.
         restore-keys: |
-          ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-
+          ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') || hashFiles('**/pnpm-lock.yaml') }}-
     - name: Get npm cache directory
       id: npm-cache-dir
       shell: bash
@@ -88,8 +88,15 @@ runs:
       run: |
         if [ "${{ inputs.package_manager }}" == "yarn" ]; then
           yarn install --frozen-lockfile
+        elif [ "${{ inputs.package_manager }}" == "pnpm" ]; then
+          if [ -n "${{ inputs.ci_flags }}" ]; then
+            pnpm install --frozen-lockfile ${{ inputs.ci_flags }}
+          else
+            pnpm install --frozen-lockfile
+          fi
+          pnpm store prune
         else
-          if [ "${{ inputs.ci_flags }}" != "" ]; then
+          if [ -n "${{ inputs.ci_flags }}" ]; then
             npm ci ${{ inputs.ci_flags }}
           else
             npm ci
