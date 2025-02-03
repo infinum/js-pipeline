@@ -13,7 +13,7 @@ inputs:
   # if not defined, use npm if `package-lock.json` is present, otherwise use yarn
   package_manager:
     required: false
-    description: 'Should npm or yarn be used to install dependencies? If not defined, use npm if `package-lock.json` is present, otherwise use yarn'
+    description: 'Should npm, pnpm yarn be used to install dependencies? If not defined, use npm if `package-lock.json` is present, otherwise use yarn'
 
   # should generally be left undefined - it will default to the `.node-version` file in the root of the project
   node_version:
