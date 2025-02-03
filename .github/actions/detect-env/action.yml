@@ -67,6 +67,8 @@ runs:
           echo "package_manager=${{ inputs.package_manager }}" >> $GITHUB_ENV
         elif [ -f package-lock.json ]; then
           echo "package_manager=npm" >> $GITHUB_ENV
+        elif [ -f pnpm-lock.yaml ]; then
+          echo "package_manager=pnpm" >> $GITHUB_ENV
         else
           echo "package_manager=yarn" >> $GITHUB_ENV
         fi

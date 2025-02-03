@@ -55,6 +55,8 @@ The logic is as follows:
     package_manager=${{ inputs.package_manager }}
   elif [ -f package-lock.json ]; then
     package_manager=npm
+  elif [ -f pnpm-lock.yaml]; then
+    package_manager=pnpm
   else
     package_manager=yarn
   fi
