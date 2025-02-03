@@ -195,7 +195,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Detect env
         uses: infinum/js-pipeline/.github/actions/detect-env@v4
@@ -231,7 +231,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: Build
         uses: infinum/js-pipeline/.github/actions/build@v4
@@ -267,7 +267,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: 'Bootstrap up the Node.js environment'
         uses: infinum/js-pipeline/.github/actions/bootstrap@v4
@@ -294,7 +294,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: 'Bootstrap up the Node.js environment'
         uses: infinum/js-pipeline/.github/actions/bootstrap@v4
@@ -322,7 +322,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: 'Bootstrap up the Node.js environment'
         uses: infinum/js-pipeline/.github/actions/bootstrap@v4
@@ -350,7 +350,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - name: 'Analyze the bundle'
         uses: infinum/js-pipeline/.github/actions/analyze@v4
@@ -374,7 +374,7 @@ jobs:
     timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
       - name: Git checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4.2.2
 
       - id: commit
         uses: pr-mpt/actions-commit-hash@v2
