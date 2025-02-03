@@ -377,11 +377,11 @@ jobs:
         uses: actions/checkout@v4.2.2
 
       - id: commit
-        uses: pr-mpt/actions-commit-hash@v2
+        uses: pr-mpt/actions-commit-hash@v3.0.0
 
       # Check the deploy technology (containers and s3 should be covered differently) - conditionals cover only cache/artifact
       - name: Restore the build from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4.2.0
         if: ${{ inputs.use_artifact == 'false' && inputs.build_cache == '' }}
         id: restore-build-cache
         with:
@@ -389,7 +389,7 @@ jobs:
           key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
 
       - name: Restore the previous build from cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4.2.0
         if: ${{ inputs.use_artifact == 'false' && inputs.build_cache != '' }}
         with:
           path: ${{ env.OUTPUT_DIST_PATH }}
