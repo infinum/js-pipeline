@@ -396,7 +396,7 @@ jobs:
           key: ${{ inputs.environment }}-build-${{ inputs.build_cache }}
 
       - name: Restore the build from artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         if: ${{ inputs.use_artifact == 'true' }}
         id: restore-build-artifact
         with:
