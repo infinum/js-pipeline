@@ -68,7 +68,7 @@ runs:
         key: ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') || hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
         # If source files changed but packages didn't, rebuild from a prior cache.
         restore-keys: |
-          ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}-
+          ${{ inputs.environment }}-nextjs-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') || hashFiles('**/pnpm-lock.yaml') }}-
     - name: Get npm cache directory
       id: npm-cache-dir
       shell: bash
