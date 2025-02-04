@@ -80,7 +80,7 @@ runs:
       with:
         path: ${{ steps.npm-cache-dir.outputs.dir }}
         # Generate a new cache whenever packages or source files change.
-        key: ${{ inputs.environment }}-npm-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') }}
+        key: ${{ inputs.environment }}-npm-${{ hashFiles('**/package-lock.json') || hashFiles('**/yarn.lock') || hashFiles('**/pnpm-lock.yaml') }}
         restore-keys: |
           ${{ inputs.environment }}-npm-
     - name: Install JS packages
@@ -89,6 +89,7 @@ runs:
         if [ "${{ inputs.package_manager }}" == "yarn" ]; then
           yarn install --frozen-lockfile
         elif [ "${{ inputs.package_manager }}" == "pnpm" ]; then
+          npm install -g pnpm
           if [ -n "${{ inputs.ci_flags }}" ]; then
             pnpm install --frozen-lockfile ${{ inputs.ci_flags }}
           else
