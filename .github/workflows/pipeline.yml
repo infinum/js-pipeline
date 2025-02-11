@@ -402,6 +402,7 @@ jobs:
         with:
           name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
           path: ${{ env.OUTPUT_DIST_PATH }}
+          include-hidden-files: true
 
       - name: Create release folder
         uses: appleboy/ssh-action@v0.1.6
