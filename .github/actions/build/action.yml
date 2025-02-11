@@ -213,6 +213,7 @@ runs:
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.artifact_path }}
+        include-hidden-files: true
         retention-days: 30
 
     - name: Upload artifacts for Next.js - Dist Path
@@ -221,6 +222,7 @@ runs:
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact-deployable'
         path: ${{ inputs.dist_path }}
+        include-hidden-files: true
         retention-days: 30
 
     - name: Generic upload artifacts
@@ -229,4 +231,5 @@ runs:
       with:
         name: 'build-${{ steps.commit.outputs.short }}-artifact'
         path: ${{ inputs.dist_path }}
+        include-hidden-files: true
         retention-days: 1
