@@ -241,6 +241,7 @@ jobs:
         with:
           name: public
           path: ${{ inputs.dist_path }}
+          include-hidden-files: true
           retention-days: 1
 
   lint:
