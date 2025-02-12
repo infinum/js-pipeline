@@ -196,7 +196,7 @@ runs:
     - name: Cache the build
       id: cache-build
       if: ${{ inputs.use_artifact == 'false' && contains(inputs.ci_steps, 'deploy') || inputs.cache_build == 'true' }}
-      uses: actions/cache@v3
+      uses: actions/cache/save@v3
       with:
         path: ${{ inputs.dist_path }}
         key: ${{ inputs.environment }}-build-${{ steps.commit.outputs.short }}
