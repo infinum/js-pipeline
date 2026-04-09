@@ -238,7 +238,7 @@ jobs:
         with:
           runner: ${{ inputs.runner }}
           framework: ${{ env.OUTPUT_FRAMEWORK }}
-          ssr: ${{ env.OUTPUT_SSR }}
+          ssr: ${{ env.OUTPUT_SSR == 'true' }}
           package_manager: ${{ env.OUTPUT_PACKAGE_MANAGER }}
           node_version: ${{ inputs.node_version }}
           newrelic: ${{ env.OUTPUT_NEWRELIC }}
