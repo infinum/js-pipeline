@@ -57,6 +57,7 @@ runs:
       with:
         node-version: ${{ inputs.node_version }}
         node-version-file: ".node-version"
+        check-latest: true
     - name: Cache node modules for Next.js
       uses: actions/cache@v3
       if: ${{ inputs.framework == 'next' && inputs.ssr }}
